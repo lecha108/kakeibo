@@ -142,7 +142,7 @@
 <body>
 
 <header>
-  <h1>家計簿</h1>
+  <h1>🔒 家計簿</h1>
 </header>
 
 <div class="container">
@@ -269,6 +269,7 @@
 </nav>
 
 <script>
+  // ★254行目: Google Apps ScriptのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxFJ9nr0LehG6hKQwfftEkawY4Pfnjs55IY1kPtj6soYrzzHqL8TljmAbnl57Ox2Rd_/exec";
 
   const ACCOUNTS = [
@@ -291,8 +292,11 @@
     { id: 'med_treatment', name: '治療費・診察代', type: 'expense', category: 'variable' },
     { id: 'med_drug', name: '医薬品代', type: 'expense', category: 'variable' },
     { id: 'daily', name: '日用品費', type: 'expense', category: 'variable' },
+    { id: 'beauty', name: '美容費', type: 'expense', category: 'variable' },
+    { id: 'car', name: '自動車費（ガソリン等）', type: 'expense', category: 'variable' },
     { id: 'transport', name: '交通費', type: 'expense', category: 'variable' },
-    { id: 'hobby', name: '教養・娯楽費', type: 'expense', category: 'variable' },
+    { id: 'education', name: '教養・勉強費', type: 'expense', category: 'variable' },
+    { id: 'hobby', name: '娯楽・趣味費', type: 'expense', category: 'variable' },
     { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' },
   ];
 
@@ -305,31 +309,41 @@
     const debitSelect = document.getElementById('debitAcc');
     const creditSelect = document.getElementById('creditAcc');
     
-    const groups = [
+    // 左側（使った目的・増えたもの）用のグループ
+    const debitGroups = [
       { label: '💰 変動費（使った目的）', category: 'variable' },
       { label: '📌 固定費（使った目的）', category: 'fixed' },
+      { label: '🏦 資産（財布・口座）', category: 'asset' },
+      { label: '💳 負債（あとで払うお金）', category: 'liability' },
+      { label: '🏛️ 繰越資金', category: 'equity' }
+    ];
+
+    // 右側（支払い元・収入源）用のグループ（固定費・変動費を除外）
+    const creditGroups = [
       { label: '🏦 資産（財布・口座）', category: 'asset' },
       { label: '💳 負債（あとで払うお金）', category: 'liability' },
       { label: '💵 収入（お金の発生源）', category: 'revenue' },
       { label: '🏛️ 繰越資金', category: 'equity' }
     ];
 
-    groups.forEach(g => {
+    // 左側プルダウン構築
+    debitGroups.forEach(g => {
       const accs = ACCOUNTS.filter(a => a.category === g.category);
       if (accs.length === 0) return;
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = g.label;
+      accs.forEach(acc => optgroup.appendChild(new Option(acc.name, acc.id)));
+      debitSelect.appendChild(optgroup);
+    });
 
-      const optgroupDeb = document.createElement('optgroup');
-      optgroupDeb.label = g.label;
-      const optgroupCred = document.createElement('optgroup');
-      optgroupCred.label = g.label;
-
-      accs.forEach(acc => {
-        optgroupDeb.appendChild(new Option(acc.name, acc.id));
-        optgroupCred.appendChild(new Option(acc.name, acc.id));
-      });
-
-      debitSelect.appendChild(optgroupDeb);
-      creditSelect.appendChild(optgroupCred);
+    // 右側プルダウン構築
+    creditGroups.forEach(g => {
+      const accs = ACCOUNTS.filter(a => a.category === g.category);
+      if (accs.length === 0) return;
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = g.label;
+      accs.forEach(acc => optgroup.appendChild(new Option(acc.name, acc.id)));
+      creditSelect.appendChild(optgroup);
     });
 
     debitSelect.value = 'food_grocery';
@@ -494,7 +508,6 @@
 
   // 月別グラフの集計と描画
   function renderCharts(currentBalances) {
-    // 1. 月別にデータを集計
     const sortedTxs = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
     const months = [...new Set(sortedTxs.map(t => t.date.substring(0, 7)))];
 
@@ -506,7 +519,6 @@
     const bsTrendLiabilities = [];
     const bsTrendEquity = [];
 
-    // 累計計算用のオブジェクト
     const runningBalances = {};
     ACCOUNTS.forEach(a => runningBalances[a.id] = 0);
 
@@ -567,7 +579,8 @@
           data: pieData,
           backgroundColor: [
             '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-            '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4'
+            '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4',
+            '#84cc16', '#a855f7', '#eab308'
           ]
         }]
       },
