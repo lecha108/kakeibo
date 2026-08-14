@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>家計簿</title>
+  <title>B/S・P/L 家計簿</title>
+  <!-- グラフ描画ライブラリ Chart.js の読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -18,11 +20,10 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 70px; /* タブバー用の余白 */
+      padding-bottom: 70px;
       -webkit-tap-highlight-color: transparent;
     }
     
-    /* ヘッダー */
     header {
       background: var(--card);
       padding: 12px 16px;
@@ -35,11 +36,9 @@
 
     .container { max-width: 600px; margin: 0 auto; padding: 12px; }
 
-    /* タブ切り替え表示 */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* カードデザイン */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -50,7 +49,6 @@
     }
     .card h2 { font-size: 1rem; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 6px; }
 
-    /* フォーム最適化 */
     .form-group { margin-bottom: 12px; }
     label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-bottom: 4px; }
     input, select, button {
@@ -58,11 +56,22 @@
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       background: #fff;
     }
     .form-row { display: flex; gap: 8px; }
     .form-row > div { flex: 1; }
+
+    .guide-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      color: #1e40af;
+      margin-bottom: 12px;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.4;
+    }
 
     button {
       background: var(--primary);
@@ -75,8 +84,17 @@
     button:active { opacity: 0.8; }
     .btn-green { background: #10b981; }
     .btn-red { background: #ef4444; }
+    .btn-del {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      width: auto;
+    }
 
-    /* テーブル最適化 */
     .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
     th, td { border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: left; }
@@ -84,7 +102,13 @@
     .amount { text-align: right; white-space: nowrap; }
     .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; background: #e2e8f0; }
 
-    /* スマホ用ボトムナビゲーション */
+    .chart-container {
+      position: relative;
+      margin-top: 12px;
+      width: 100%;
+      min-height: 220px;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -118,7 +142,7 @@
 <body>
 
 <header>
-  <h1>家計簿</h1>
+  <h1>🔒 B/S・P/L 家計簿</h1>
 </header>
 
 <div class="container">
@@ -127,6 +151,11 @@
   <div id="tab-input" class="tab-content active">
     <div class="card">
       <h2>取引の入力</h2>
+      <div class="guide-box">
+        💡 <b>簡単えらび方ガイド</b><br>
+        ・<b>買い物・支払いのとき：</b> 左に使った費目、右に払った口座やカード<br>
+        ・<b>給料・収入のとき：</b> 左に入金先の口座、右に収入の項目
+      </div>
       <form id="txForm">
         <div class="form-group">
           <label>日付</label>
@@ -134,21 +163,21 @@
         </div>
         <div class="form-group">
           <label>摘要（メモ）</label>
-          <input type="text" id="desc" placeholder="例: スーパーで買出し" required>
+          <input type="text" id="desc" placeholder="例: スーパーで食材購入" required>
         </div>
         <div class="form-row form-group">
           <div>
-            <label>借方 (支出/増加)</label>
+            <label>使い道・増えたもの</label>
             <select id="debitAcc"></select>
           </div>
           <div>
-            <label>貸方 (収入/減少)</label>
+            <label>支払い元・収入源</label>
             <select id="creditAcc"></select>
           </div>
         </div>
         <div class="form-group">
           <label>金額 (円)</label>
-          <input type="number" id="amount" min="1" placeholder="5000" inputmode="numeric" required>
+          <input type="number" id="amount" min="1" placeholder="3000" inputmode="numeric" required>
         </div>
         <button type="submit">登録する</button>
       </form>
@@ -158,7 +187,19 @@
   <!-- タブ②：損益計算書 (P/L) -->
   <div id="tab-pl" class="tab-content">
     <div class="card">
-      <h2>損益計算書 (P/L)</h2>
+      <h2>月間推移（収入・支出・手残り）</h2>
+      <div class="chart-container">
+        <canvas id="plTrendChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h2>支出の内訳（円グラフ）</h2>
+      <div class="chart-container" style="max-width: 320px; margin: 0 auto;">
+        <canvas id="plPieChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h2>損益計算書 (P/L) 累計</h2>
       <div class="table-responsive">
         <table>
           <thead><tr><th>科目</th><th class="amount">金額</th></tr></thead>
@@ -170,6 +211,12 @@
 
   <!-- タブ③：貸借対照表 (B/S) -->
   <div id="tab-bs" class="tab-content">
+    <div class="card">
+      <h2>純資産・資産・負債の月間推移</h2>
+      <div class="chart-container">
+        <canvas id="bsTrendChart"></canvas>
+      </div>
+    </div>
     <div class="card">
       <h2>貸借対照表 (B/S)</h2>
       <div class="table-responsive">
@@ -187,7 +234,7 @@
       <h2>データ操作</h2>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button id="backupBtn" class="btn-green">Googleスプレッドシートへ保存</button>
-        <button id="clearBtn" class="btn-red">データを初期化</button>
+        <button id="clearBtn" class="btn-red">全データを初期化</button>
       </div>
     </div>
     <div class="card">
@@ -195,7 +242,7 @@
       <div class="table-responsive">
         <table>
           <thead>
-            <tr><th>日付/摘要</th><th>仕訳</th><th class="amount">金額</th></tr>
+            <tr><th>日付/摘要</th><th>仕訳</th><th class="amount">金額</th><th>操作</th></tr>
           </thead>
           <tbody id="historyBody"></tbody>
         </table>
@@ -207,56 +254,98 @@
 
 <!-- 下部ナビゲーションバー -->
 <nav class="bottom-nav">
-  <div class="nav-item active" onclick="switchTab('input')">
+  <div class="nav-item active" onclick="switchTab('input', this)">
     <span class="nav-icon">✏️</span>入力
   </div>
-  <div class="nav-item" onclick="switchTab('pl')">
+  <div class="nav-item" onclick="switchTab('pl', this)">
     <span class="nav-icon">📈</span>P/L
   </div>
-  <div class="nav-item" onclick="switchTab('bs')">
+  <div class="nav-item" onclick="switchTab('bs', this)">
     <span class="nav-icon">⚖️</span>B/S
   </div>
-  <div class="nav-item" onclick="switchTab('history')">
+  <div class="nav-item" onclick="switchTab('history', this)">
     <span class="nav-icon">📜</span>履歴・設定
   </div>
 </nav>
 
 <script>
-  // ★ ご自身のGoogle Apps ScriptのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxFJ9nr0LehG6hKQwfftEkawY4Pfnjs55IY1kPtj6soYrzzHqL8TljmAbnl57Ox2Rd_/exec";
 
   const ACCOUNTS = [
-    { id: 'cash', name: '現金・口座', type: 'asset' },
-    { id: 'paypay', name: '電子マネー', type: 'asset' },
-    { id: 'card', name: 'カード未払金', type: 'liability' },
-    { id: 'equity', name: '過去の蓄積', type: 'equity' },
-    { id: 'salary', name: '給与収入', type: 'revenue' },
-    { id: 'food', name: '食費', type: 'expense' },
-    { id: 'daily', name: '日用品費', type: 'expense' },
-    { id: 'utility', name: '光熱通信費', type: 'expense' },
+    { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
+    { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
+    { id: 'card', name: 'カード未払金', type: 'liability', category: 'liability' },
+    { id: 'equity', name: '過去の蓄積（純資産）', type: 'equity', category: 'equity' },
+    
+    { id: 'salary', name: '給与収入', type: 'revenue', category: 'revenue' },
+    { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
+
+    { id: 'rent', name: '住居費・家賃', type: 'expense', category: 'fixed' },
+    { id: 'utility', name: '光熱水道費', type: 'expense', category: 'fixed' },
+    { id: 'telecom', name: '通信費（携帯・ネット）', type: 'expense', category: 'fixed' },
+    { id: 'subscription', name: 'サブスク・定額費', type: 'expense', category: 'fixed' },
+    { id: 'insurance', name: '保険料', type: 'expense', category: 'fixed' },
+
+    { id: 'food_grocery', name: '食料品費', type: 'expense', category: 'variable' },
+    { id: 'food_out', name: '外食代', type: 'expense', category: 'variable' },
+    { id: 'med_treatment', name: '治療費・診察代', type: 'expense', category: 'variable' },
+    { id: 'med_drug', name: '医薬品代', type: 'expense', category: 'variable' },
+    { id: 'daily', name: '日用品費', type: 'expense', category: 'variable' },
+    { id: 'transport', name: '交通費', type: 'expense', category: 'variable' },
+    { id: 'hobby', name: '教養・娯楽費', type: 'expense', category: 'variable' },
+    { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' },
   ];
 
   let transactions = JSON.parse(localStorage.getItem('kakeibo_txs') || '[]');
+  let chartPLTrend = null, chartPLPie = null, chartBSTrend = null;
 
   document.getElementById('date').valueAsDate = new Date();
-  const debitSelect = document.getElementById('debitAcc');
-  const creditSelect = document.getElementById('creditAcc');
 
-  ACCOUNTS.forEach(acc => {
-    debitSelect.add(new Option(acc.name, acc.id));
-    creditSelect.add(new Option(acc.name, acc.id));
-  });
-
-  // タブ切り替え処理
-  function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  function setupAccountSelects() {
+    const debitSelect = document.getElementById('debitAcc');
+    const creditSelect = document.getElementById('creditAcc');
     
-    document.getElementById(`tab-${tabName}`).classList.add('active');
-    event.currentTarget.classList.add('active');
+    const groups = [
+      { label: '💰 変動費（使った目的）', category: 'variable' },
+      { label: '📌 固定費（使った目的）', category: 'fixed' },
+      { label: '🏦 資産（財布・口座）', category: 'asset' },
+      { label: '💳 負債（あとで払うお金）', category: 'liability' },
+      { label: '💵 収入（お金の発生源）', category: 'revenue' },
+      { label: '🏛️ 繰越資金', category: 'equity' }
+    ];
+
+    groups.forEach(g => {
+      const accs = ACCOUNTS.filter(a => a.category === g.category);
+      if (accs.length === 0) return;
+
+      const optgroupDeb = document.createElement('optgroup');
+      optgroupDeb.label = g.label;
+      const optgroupCred = document.createElement('optgroup');
+      optgroupCred.label = g.label;
+
+      accs.forEach(acc => {
+        optgroupDeb.appendChild(new Option(acc.name, acc.id));
+        optgroupCred.appendChild(new Option(acc.name, acc.id));
+      });
+
+      debitSelect.appendChild(optgroupDeb);
+      creditSelect.appendChild(optgroupCred);
+    });
+
+    debitSelect.value = 'food_grocery';
+    creditSelect.value = 'cash';
   }
 
-  // 登録処理
+  setupAccountSelects();
+
+  function switchTab(tabName, el) {
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+    
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    if (el) el.classList.add('active');
+  }
+
   document.getElementById('txForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const tx = {
@@ -275,7 +364,14 @@
     alert("登録しました！");
   });
 
-  // バックアップ処理
+  function deleteTx(id) {
+    if (confirm("この取引を削除しますか？")) {
+      transactions = transactions.filter(tx => tx.id !== id);
+      localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+      render();
+    }
+  }
+
   document.getElementById('backupBtn').addEventListener('click', async () => {
     if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
       alert("GAS_URLを設定してください。");
@@ -303,7 +399,6 @@
     }
   });
 
-  // 初期化
   document.getElementById('clearBtn').addEventListener('click', () => {
     if (confirm('全データを削除しますか？')) {
       transactions = [];
@@ -312,7 +407,6 @@
     }
   });
 
-  // 描画
   function render() {
     const balances = {};
     ACCOUNTS.forEach(a => balances[a.id] = 0);
@@ -321,18 +415,42 @@
       balances[tx.credit] -= tx.amount;
     });
 
-    // P/L
-    let totalRevenue = 0, totalExpense = 0, plHtml = '';
-    ACCOUNTS.filter(a => a.type === 'revenue' || a.type === 'expense').forEach(a => {
-      let val = a.type === 'revenue' ? -balances[a.id] : balances[a.id];
-      if (a.type === 'revenue') totalRevenue += val; else totalExpense += val;
+    // 表 (P/L) 描画
+    let totalRevenue = 0, totalFixed = 0, totalVariable = 0, plHtml = '';
+
+    plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【収入の部】</th></tr>`;
+    ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
+      const val = -balances[a.id];
+      totalRevenue += val;
       if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
-    const netIncome = totalRevenue - totalExpense;
-    plHtml += `<tr style="font-weight:bold; background:#e6fffa;"><td>当期純利益</td><td class="amount">${netIncome.toLocaleString()}円</td></tr>`;
+    plHtml += `<tr style="font-weight:bold; background:#f0fdf4;"><td>収入合計</td><td class="amount">${totalRevenue.toLocaleString()}円</td></tr>`;
+
+    plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【固定費】</th></tr>`;
+    ACCOUNTS.filter(a => a.category === 'fixed').forEach(a => {
+      const val = balances[a.id];
+      totalFixed += val;
+      if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
+    plHtml += `<tr style="font-weight:bold; background:#fff7ed;"><td>固定費小計</td><td class="amount">${totalFixed.toLocaleString()}円</td></tr>`;
+
+    plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【変動費】</th></tr>`;
+    ACCOUNTS.filter(a => a.category === 'variable').forEach(a => {
+      const val = balances[a.id];
+      totalVariable += val;
+      if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
+    plHtml += `<tr style="font-weight:bold; background:#fff7ed;"><td>変動費小計</td><td class="amount">${totalVariable.toLocaleString()}円</td></tr>`;
+
+    const totalExpense = totalFixed + totalVariable;
+    const netSavings = totalRevenue - totalExpense;
+
+    plHtml += `<tr style="font-weight:bold; background:#fef2f2;"><td>支出合計</td><td class="amount">${totalExpense.toLocaleString()}円</td></tr>`;
+    plHtml += `<tr style="font-weight:bold; background:#e6fffa; font-size:0.9rem;"><td>今期の収支差額（手残り）</td><td class="amount" style="color:${netSavings >= 0 ? '#0d9488' : '#dc2626'};">${netSavings.toLocaleString()}円</td></tr>`;
+
     document.getElementById('plBody').innerHTML = plHtml;
 
-    // B/S
+    // 表 (B/S) 描画
     let bsHtml = '', totalAssets = 0, totalLiabilities = 0;
     bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【資産の部】</th></tr>`;
     ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
@@ -344,16 +462,19 @@
       const val = -balances[a.id]; totalLiabilities += val;
       bsHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
+
     const retainedEarnings = balances['equity'] ? -balances['equity'] : 0;
-    const totalEquity = retainedEarnings + netIncome;
+    const totalEquity = retainedEarnings + netSavings;
+
     bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【純資産の部】</th></tr>`;
-    bsHtml += `<tr><td>過去の蓄積</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
-    bsHtml += `<tr><td>当期純利益</td><td class="amount">${netIncome.toLocaleString()}円</td></tr>`;
+    bsHtml += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
+    bsHtml += `<tr><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
     bsHtml += `<tr style="font-weight:bold; background:#eff6ff;"><td>資産合計</td><td class="amount">${totalAssets.toLocaleString()}円</td></tr>`;
     bsHtml += `<tr style="font-weight:bold; background:#fef2f2;"><td>負債・純資産合計</td><td class="amount">${(totalLiabilities + totalEquity).toLocaleString()}円</td></tr>`;
+
     document.getElementById('bsBody').innerHTML = bsHtml;
 
-    // 履歴
+    // 履歴描画
     let historyHtml = '';
     [...transactions].reverse().forEach(tx => {
       const deb = ACCOUNTS.find(a => a.id === tx.debit)?.name || tx.debit;
@@ -362,9 +483,111 @@
         <td><div style="font-size:0.75rem; color:#64748b;">${tx.date}</div><b>${tx.desc}</b></td>
         <td><span class="badge">${deb}</span><br>↓<br><span class="badge">${cred}</span></td>
         <td class="amount">${tx.amount.toLocaleString()}円</td>
+        <td style="text-align:center;"><button class="btn-del" onclick="deleteTx(${tx.id})">削除</button></td>
       </tr>`;
     });
     document.getElementById('historyBody').innerHTML = historyHtml;
+
+    // グラフデータの生成＆更新
+    renderCharts(balances);
+  }
+
+  // 月別グラフの集計と描画
+  function renderCharts(currentBalances) {
+    // 1. 月別にデータを集計
+    const sortedTxs = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
+    const months = [...new Set(sortedTxs.map(t => t.date.substring(0, 7)))];
+
+    const plTrendRevenue = [];
+    const plTrendExpense = [];
+    const plTrendSavings = [];
+
+    const bsTrendAssets = [];
+    const bsTrendLiabilities = [];
+    const bsTrendEquity = [];
+
+    // 累計計算用のオブジェクト
+    const runningBalances = {};
+    ACCOUNTS.forEach(a => runningBalances[a.id] = 0);
+
+    months.forEach(m => {
+      let mRev = 0, mExp = 0;
+      const mTxs = sortedTxs.filter(t => t.date.startsWith(m));
+
+      mTxs.forEach(tx => {
+        runningBalances[tx.debit] += tx.amount;
+        runningBalances[tx.credit] -= tx.amount;
+
+        const debAcc = ACCOUNTS.find(a => a.id === tx.debit);
+        const credAcc = ACCOUNTS.find(a => a.id === tx.credit);
+
+        if (debAcc?.type === 'expense') mExp += tx.amount;
+        if (credAcc?.type === 'revenue') mRev += tx.amount;
+      });
+
+      plTrendRevenue.push(mRev);
+      plTrendExpense.push(mExp);
+      plTrendSavings.push(mRev - mExp);
+
+      let ast = 0, lia = 0;
+      ACCOUNTS.filter(a => a.type === 'asset').forEach(a => ast += runningBalances[a.id]);
+      ACCOUNTS.filter(a => a.type === 'liability').forEach(a => lia += -runningBalances[a.id]);
+
+      bsTrendAssets.push(ast);
+      bsTrendLiabilities.push(lia);
+      bsTrendEquity.push(ast - lia);
+    });
+
+    // P/L 推移（折れ線）
+    if (chartPLTrend) chartPLTrend.destroy();
+    chartPLTrend = new Chart(document.getElementById('plTrendChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          { label: '収入', data: plTrendRevenue, borderColor: '#10b981', tension: 0.2 },
+          { label: '支出', data: plTrendExpense, borderColor: '#ef4444', tension: 0.2 },
+          { label: '手残り', data: plTrendSavings, borderColor: '#2563eb', tension: 0.2 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // P/L 円グラフ（支出の内訳）
+    const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && currentBalances[a.id] > 0);
+    const pieLabels = expAccounts.map(a => a.name);
+    const pieData = expAccounts.map(a => currentBalances[a.id]);
+
+    if (chartPLPie) chartPLPie.destroy();
+    chartPLPie = new Chart(document.getElementById('plPieChart'), {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieData,
+          backgroundColor: [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4'
+          ]
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // B/S 推移（折れ線）
+    if (chartBSTrend) chartBSTrend.destroy();
+    chartBSTrend = new Chart(document.getElementById('bsTrendChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          { label: '純資産（蓄積）', data: bsTrendEquity, borderColor: '#2563eb', tension: 0.2, borderWidth: 3 },
+          { label: '総資産', data: bsTrendAssets, borderColor: '#10b981', tension: 0.2 },
+          { label: '負債（カード未払等）', data: bsTrendLiabilities, borderColor: '#ef4444', tension: 0.2 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
   }
 
   render();
