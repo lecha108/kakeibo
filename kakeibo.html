@@ -154,7 +154,8 @@
       <div class="guide-box">
         💡 <b>簡単えらび方ガイド</b><br>
         ・<b>買い物・支払いのとき：</b> 左に使った費目、右に払った口座やカード<br>
-        ・<b>給料・収入のとき：</b> 左に入金先の口座、右に収入の項目
+        ・<b>給料・収入のとき：</b> 左に入金先の口座、右に収入の項目<br>
+        ・<b>投資信託の月末調整：</b> 増えたら左に投信・右に運用益、減ったら左に運用損・右に投信
       </div>
       <form id="txForm">
         <div class="form-group">
@@ -163,7 +164,7 @@
         </div>
         <div class="form-group">
           <label>摘要（メモ）</label>
-          <input type="text" id="desc" placeholder="例: スーパーで食材購入" required>
+          <input type="text" id="desc" placeholder="例: 月末評価額調整、スーパーで食材購入" required>
         </div>
         <div class="form-row form-group">
           <div>
@@ -269,16 +270,18 @@
 </nav>
 
 <script>
-  // ★254行目: Google Apps ScriptのURLを設定してください
+  // ★257行目: Google Apps ScriptのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxFJ9nr0LehG6hKQwfftEkawY4Pfnjs55IY1kPtj6soYrzzHqL8TljmAbnl57Ox2Rd_/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
+    { id: 'investment', name: '投資信託・有価証券', type: 'asset', category: 'asset' },
     { id: 'card', name: 'カード未払金', type: 'liability', category: 'liability' },
     { id: 'equity', name: '過去の蓄積（純資産）', type: 'equity', category: 'equity' },
     
     { id: 'salary', name: '給与収入', type: 'revenue', category: 'revenue' },
+    { id: 'invest_gain', name: '運用益（評価益など）', type: 'revenue', category: 'revenue' },
     { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
 
     { id: 'rent', name: '住居費・家賃', type: 'expense', category: 'fixed' },
@@ -297,6 +300,7 @@
     { id: 'transport', name: '交通費', type: 'expense', category: 'variable' },
     { id: 'education', name: '教養・勉強費', type: 'expense', category: 'variable' },
     { id: 'hobby', name: '娯楽・趣味費', type: 'expense', category: 'variable' },
+    { id: 'invest_loss', name: '運用損（評価損など）', type: 'expense', category: 'variable' },
     { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' },
   ];
 
@@ -313,14 +317,14 @@
     const debitGroups = [
       { label: '💰 変動費（使った目的）', category: 'variable' },
       { label: '📌 固定費（使った目的）', category: 'fixed' },
-      { label: '🏦 資産（財布・口座）', category: 'asset' },
+      { label: '🏦 資産（財布・口座・投信）', category: 'asset' },
       { label: '💳 負債（あとで払うお金）', category: 'liability' },
       { label: '🏛️ 繰越資金', category: 'equity' }
     ];
 
     // 右側（支払い元・収入源）用のグループ（固定費・変動費を除外）
     const creditGroups = [
-      { label: '🏦 資産（財布・口座）', category: 'asset' },
+      { label: '🏦 資産（財布・口座・投信）', category: 'asset' },
       { label: '💳 負債（あとで払うお金）', category: 'liability' },
       { label: '💵 収入（お金の発生源）', category: 'revenue' },
       { label: '🏛️ 繰越資金', category: 'equity' }
