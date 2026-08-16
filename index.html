@@ -350,11 +350,18 @@
   let currentCalDate = new Date();
   let selectedDateStr = new Date().toISOString().split('T')[0];
 
-  // 日付文字列を YYYY-MM-DD に統一整形する関数（安全装置）
+  // 日付文字列を時差（JST）を考慮して YYYY-MM-DD に統一整形する関数
   function cleanDateStr(dStr) {
     if (!dStr) return '';
     let str = String(dStr).trim();
     if (str.includes('T')) {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
       str = str.split('T')[0];
     }
     return str;
