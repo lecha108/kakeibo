@@ -405,21 +405,24 @@
   }
 
   async function loadFromSpreadsheet() {
-    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) return;
+    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
+      render();
+      return;
+    }
     document.getElementById('loadingBanner').style.display = 'block';
 
     try {
       const res = await fetch(GAS_URL);
       const data = await res.json();
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         transactions = data;
         localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
-        render();
       }
     } catch (err) {
       console.log("クラウド同期スキップ");
     } finally {
       document.getElementById('loadingBanner').style.display = 'none';
+      render();
     }
   }
 
@@ -783,6 +786,8 @@
     });
   }
 
+  // 初期呼び出し
+  render();
   loadFromSpreadsheet();
 </script>
 </body>
