@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>家計簿</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- 外側にラベル・パーセンテージを表示するためのプラグインを追加 -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -155,6 +157,34 @@
     .amount { text-align: right; white-space: nowrap; }
 
     .chart-container { position: relative; margin-top: 12px; width: 100%; height: 250px; }
+    
+    /* ドーナツグラフ用コンテナ */
+    .pie-chart-container {
+      position: relative;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 380px;
+      height: 320px;
+    }
+    .pie-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .pie-center-title {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      font-weight: bold;
+    }
+    .pie-center-amount {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: var(--text);
+      margin-top: 2px;
+    }
 
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
@@ -259,7 +289,11 @@
     </div>
     <div class="card">
       <h2>支出の内訳（円グラフ）</h2>
-      <div class="chart-container" style="max-width: 320px; margin: 0 auto;">
+      <div class="pie-chart-container">
+        <div class="pie-center-text">
+          <div class="pie-center-title">支出合計</div>
+          <div class="pie-center-amount" id="pieCenterAmount">0円</div>
+        </div>
         <canvas id="plPieChart"></canvas>
       </div>
     </div>
@@ -641,7 +675,8 @@
           if (cred?.type === 'revenue') dayRev += t.amount;
         });
 
-       let badgeHtml = '';
+        // 金額をカンマ区切りの正確な数値で表示
+        let badgeHtml = '';
         if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${dayRev.toLocaleString()}</div>`;
         if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${dayExp.toLocaleString()}</div>`;
 
@@ -733,6 +768,10 @@
       const plBody = document.getElementById('plBody');
       if (plBody) plBody.innerHTML = plHtml;
 
+      // 円グラフの中央に支出合計を表示
+      const centerAmountEl = document.getElementById('pieCenterAmount');
+      if (centerAmountEl) centerAmountEl.textContent = `${totalExpense.toLocaleString()}円`;
+
       let bsHtml = '', totalAssets = 0, totalLiabilities = 0;
       bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【資産の部】</th></tr>`;
       ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
@@ -806,6 +845,7 @@
         bsTrendEquity.push(ast - lia);
       });
 
+      // P/L 推移グラフ
       const plTrendCanvas = document.getElementById('plTrendChart');
       if (plTrendCanvas) {
         if (chartPLTrend) chartPLTrend.destroy();
@@ -823,30 +863,85 @@
         });
       }
 
+      // ドーナツ型支出内訳グラフ（datalabels使用）
       const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && currentBalances[a.id] > 0);
       const pieLabels = expAccounts.map(a => a.name);
       const pieData = expAccounts.map(a => currentBalances[a.id]);
+      const totalExpSum = pieData.reduce((sum, v) => sum + v, 0);
+
+      const categoryColors = [
+        '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
+        '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
+        '#14b8a6', '#a855f7', '#eab308'
+      ];
 
       const plPieCanvas = document.getElementById('plPieChart');
-      if (plPieCanvas && pieData.length > 0) {
+      if (plPieCanvas) {
         if (chartPLPie) chartPLPie.destroy();
-        chartPLPie = new Chart(plPieCanvas, {
-          type: 'pie',
-          data: {
-            labels: pieLabels,
-            datasets: [{
-              data: pieData,
-              backgroundColor: [
-                '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-                '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4',
-                '#84cc16', '#a855f7', '#eab308'
-              ]
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
+        
+        if (pieData.length > 0) {
+          // ChartDataLabels プラグインの登録確認
+          const pluginsConfig = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
+          chartPLPie = new Chart(plPieCanvas, {
+            type: 'doughnut',
+            plugins: pluginsConfig,
+            data: {
+              labels: pieLabels,
+              datasets: [{
+                data: pieData,
+                backgroundColor: categoryColors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '68%',
+              layout: {
+                padding: 45
+              },
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const value = context.raw || 0;
+                      const pct = totalExpSum > 0 ? ((value / totalExpSum) * 100).toFixed(1) : 0;
+                      return `${context.label}: ${value.toLocaleString()}円 (${pct}%)`;
+                    }
+                  }
+                },
+                datalabels: {
+                  anchor: 'end',
+                  align: 'end',
+                  offset: 6,
+                  color: function(context) {
+                    return categoryColors[context.dataIndex % categoryColors.length];
+                  },
+                  font: {
+                    weight: 'bold',
+                    size: 10
+                  },
+                  textAlign: 'center',
+                  formatter: function(value, context) {
+                    if (totalExpSum === 0) return '';
+                    const pct = Math.round((value / totalExpSum) * 100);
+                    if (pct < 2) return ''; // 2%未満は重なり防止のため非表示
+                    const label = context.chart.data.labels[context.dataIndex];
+                    return `${label}\n${pct}%`;
+                  }
+                }
+              }
+            }
+          });
+        }
       }
 
+      // B/S 推移グラフ
       const bsTrendCanvas = document.getElementById('bsTrendChart');
       if (bsTrendCanvas) {
         if (chartBSTrend) chartBSTrend.destroy();
