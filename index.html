@@ -123,10 +123,11 @@
     .calendar-cell.selected { background: #eff6ff; outline: 2px solid var(--primary); z-index: 1; }
     .day-num { font-size: 0.75rem; font-weight: bold; color: var(--text); }
     .day-badge {
-      font-size: 0.65rem;
+      font-size: 0.58rem;
       line-height: 1.1;
       text-align: right;
       padding-right: 2px;
+      white-space: nowrap;
     }
     .badge-exp { color: #ef4444; }
     .badge-rev { color: #10b981; }
@@ -640,9 +641,9 @@
           if (cred?.type === 'revenue') dayRev += t.amount;
         });
 
-        let badgeHtml = '';
-        if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${(dayRev/1000).toFixed(0)}k</div>`;
-        if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${(dayExp/1000).toFixed(0)}k</div>`;
+       let badgeHtml = '';
+        if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${dayRev.toLocaleString()}</div>`;
+        if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${dayExp.toLocaleString()}</div>`;
 
         cell.innerHTML = `
           <span class="day-num">${d}</span>
