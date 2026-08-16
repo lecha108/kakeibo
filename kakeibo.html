@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #f1f5f9;
+      --bg: #f8fafc;
       --card: #ffffff;
       --primary: #2563eb;
       --text: #0f172a;
@@ -16,7 +16,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       padding-bottom: 70px;
@@ -30,8 +30,9 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      text-align: center;
     }
-    header h1 { font-size: 1.1rem; color: #1e293b; text-align: center; }
+    header h1 { font-size: 1.1rem; color: #1e293b; }
 
     .container { max-width: 600px; margin: 0 auto; padding: 12px; }
 
@@ -78,87 +79,98 @@
       border: none;
       font-weight: bold;
       cursor: pointer;
-      transition: background 0.2s;
     }
     button:active { opacity: 0.8; }
     .btn-green { background: #10b981; }
     .btn-red { background: #ef4444; }
-    .btn-action-group {
+
+    /* カレンダー用スタイル */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .calendar-header h3 { font-size: 1.1rem; }
+    .calendar-header button { width: auto; padding: 6px 16px; font-size: 0.85rem; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .calendar-day-head {
+      background: #f1f5f9;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--text-sub);
+    }
+    .calendar-cell {
+      background: #fff;
+      min-height: 52px;
+      padding: 4px 2px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-    .btn-edit {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
+      justify-content: space-between;
       cursor: pointer;
-      width: auto;
+      position: relative;
     }
-    .btn-del {
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      width: auto;
+    .calendar-cell.other-month { background: #fafafa; opacity: 0.4; }
+    .calendar-cell.selected { background: #eff6ff; outline: 2px solid var(--primary); z-index: 1; }
+    .day-num { font-size: 0.75rem; font-weight: bold; color: var(--text); }
+    .day-badge {
+      font-size: 0.65rem;
+      line-height: 1.1;
+      text-align: right;
+      padding-right: 2px;
     }
+    .badge-exp { color: #ef4444; }
+    .badge-rev { color: #10b981; }
+
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-info { flex: 1; }
+    .tx-title { font-size: 0.9rem; font-weight: bold; }
+    .tx-sub { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
+    .tx-amount { text-align: right; font-weight: bold; font-size: 0.95rem; margin-right: 12px; }
+    .tx-btns { display: flex; gap: 4px; }
+    .btn-edit-sm { background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
+    .btn-del-sm { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
 
     .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
     th, td { border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: left; }
     th { background: #f8fafc; color: var(--text-sub); font-size: 0.75rem; }
     .amount { text-align: right; white-space: nowrap; }
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; background: #e2e8f0; }
 
-    .chart-container {
-      position: relative;
-      margin-top: 12px;
-      width: 100%;
-      min-height: 220px;
-    }
+    .chart-container { position: relative; margin-top: 12px; width: 100%; min-height: 220px; }
 
     .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: var(--card);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 100;
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 100;
     }
     .nav-item {
-      flex: 1;
-      text-align: center;
-      padding: 8px 0;
-      color: var(--text-sub);
-      font-size: 0.75rem;
-      cursor: pointer;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
+      flex: 1; text-align: center; padding: 8px 0; color: var(--text-sub);
+      font-size: 0.75rem; cursor: pointer; text-decoration: none;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
     }
     .nav-item.active { color: var(--primary); font-weight: bold; }
     .nav-icon { font-size: 1.2rem; }
 
     .loading-banner {
-      background: #fef3c7;
-      color: #92400e;
-      text-align: center;
-      padding: 6px;
-      font-size: 0.8rem;
-      display: none;
+      background: #fef3c7; color: #92400e; text-align: center; padding: 6px; font-size: 0.8rem; display: none;
     }
   </style>
 </head>
@@ -211,7 +223,33 @@
     </div>
   </div>
 
-  <!-- タブ②：損益計算書 (P/L) -->
+  <!-- タブ②：カレンダー -->
+  <div id="tab-calendar" class="tab-content">
+    <div class="card">
+      <div class="calendar-header">
+        <button onclick="changeMonth(-1)">◀ 前月</button>
+        <h3 id="calendarTitle">2026年 8月</h3>
+        <button onclick="changeMonth(1)">次月 ▶</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="selectedDateTitle">取引一覧</h2>
+      <div id="dailyTxList"></div>
+    </div>
+
+    <div class="card">
+      <h2>データ同期・設定</h2>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="syncBtn" style="background:#0284c7;">スプレッドシートから再読み込み</button>
+        <button id="backupBtn" class="btn-green">Googleスプレッドシートへ保存</button>
+        <button id="clearBtn" class="btn-red">全データを初期化</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- タブ③：損益計算書 (P/L) -->
   <div id="tab-pl" class="tab-content">
     <div class="card">
       <h2>月間推移（収入・支出・手残り）</h2>
@@ -236,7 +274,7 @@
     </div>
   </div>
 
-  <!-- タブ③：貸借対照表 (B/S) -->
+  <!-- タブ④：貸借対照表 (B/S) -->
   <div id="tab-bs" class="tab-content">
     <div class="card">
       <h2>純資産・資産・負債の月間推移</h2>
@@ -255,49 +293,25 @@
     </div>
   </div>
 
-  <!-- タブ④：履歴＆設定 -->
-  <div id="tab-history" class="tab-content">
-    <div class="card">
-      <h2>データ操作</h2>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="syncBtn" style="background:#0284c7;">スプレッドシートから再読み込み</button>
-        <button id="backupBtn" class="btn-green">Googleスプレッドシートへ保存</button>
-        <button id="clearBtn" class="btn-red">全データを初期化</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>取引履歴</h2>
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr><th>日付/摘要</th><th>仕訳</th><th class="amount">金額</th><th>操作</th></tr>
-          </thead>
-          <tbody id="historyBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- 下部ナビゲーションバー -->
 <nav class="bottom-nav">
-  <div class="nav-item active" onclick="switchTab('input', document.querySelectorAll('.nav-item')[0])">
+  <div class="nav-item active" onclick="switchTab('input', this)">
     <span class="nav-icon">✏️</span>入力
   </div>
-  <div class="nav-item" onclick="switchTab('pl', document.querySelectorAll('.nav-item')[1])">
+  <div class="nav-item" onclick="switchTab('calendar', this)">
+    <span class="nav-icon">📅</span>カレンダー
+  </div>
+  <div class="nav-item" onclick="switchTab('pl', this)">
     <span class="nav-icon">📈</span>P/L
   </div>
-  <div class="nav-item" onclick="switchTab('bs', document.querySelectorAll('.nav-item')[2])">
+  <div class="nav-item" onclick="switchTab('bs', this)">
     <span class="nav-icon">⚖️</span>B/S
-  </div>
-  <div class="nav-item" onclick="switchTab('history', document.querySelectorAll('.nav-item')[3])">
-    <span class="nav-icon">📜</span>履歴・設定
   </div>
 </nav>
 
 <script>
-  // ★275行目: Google Apps ScriptのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbyaGFBg2ibV0T_rBlD0y_e6fi_mfQ2xZ81C4AV5e2yaBBuLMbQiDpveq0l4qSH_Ernp/exec";
 
   const ACCOUNTS = [
@@ -334,7 +348,10 @@
   let transactions = JSON.parse(localStorage.getItem('kakeibo_txs') || '[]');
   let chartPLTrend = null, chartPLPie = null, chartBSTrend = null;
 
-  document.getElementById('date').valueAsDate = new Date();
+  let currentCalDate = new Date();
+  let selectedDateStr = new Date().toISOString().split('T')[0];
+
+  document.getElementById('date').value = selectedDateStr;
 
   function setupAccountSelects() {
     const debitSelect = document.getElementById('debitAcc');
@@ -387,7 +404,6 @@
     if (el) el.classList.add('active');
   }
 
-  // スプレッドシートからの自動読み込み
   async function loadFromSpreadsheet() {
     if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) return;
     document.getElementById('loadingBanner').style.display = 'block';
@@ -401,7 +417,7 @@
         render();
       }
     } catch (err) {
-      console.log("クラウド同期スキップ（オフラインまたは初回）");
+      console.log("クラウド同期スキップ");
     } finally {
       document.getElementById('loadingBanner').style.display = 'none';
     }
@@ -431,6 +447,7 @@
       alert("登録しました！");
     }
 
+    selectedDateStr = txData.date;
     localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
     resetForm();
     render();
@@ -456,7 +473,7 @@
 
   function resetForm() {
     document.getElementById('editId').value = '';
-    document.getElementById('date').valueAsDate = new Date();
+    document.getElementById('date').value = selectedDateStr;
     document.getElementById('desc').value = '';
     document.getElementById('debitAcc').value = 'food_grocery';
     document.getElementById('creditAcc').value = 'cash';
@@ -511,6 +528,107 @@
     }
   });
 
+  // カレンダー関連処理
+  function changeMonth(diff) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + diff);
+    renderCalendar();
+  }
+
+  function selectDate(dateStr) {
+    selectedDateStr = dateStr;
+    document.getElementById('date').value = selectedDateStr;
+    renderCalendar();
+    renderDailyList();
+  }
+
+  function renderCalendar() {
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    document.getElementById('calendarTitle').textContent = `${year}年 ${month + 1}月`;
+
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+
+    const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+    weekDays.forEach(d => {
+      const head = document.createElement('div');
+      head.className = 'calendar-day-head';
+      head.textContent = d;
+      grid.appendChild(head);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const prevLastDate = new Date(year, month, 0).getDate();
+
+    // 前月埋め
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell other-month';
+      cell.innerHTML = `<span class="day-num">${prevLastDate - i}</span>`;
+      grid.appendChild(cell);
+    }
+
+    // 当月
+    for (let d = 1; d <= lastDate; d++) {
+      const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const cell = document.createElement('div');
+      cell.className = `calendar-cell ${dStr === selectedDateStr ? 'selected' : ''}`;
+      cell.onclick = () => selectDate(dStr);
+
+      let dayExp = 0, dayRev = 0;
+      transactions.filter(t => t.date === dStr).forEach(t => {
+        const deb = ACCOUNTS.find(a => a.id === t.debit);
+        const cred = ACCOUNTS.find(a => a.id === t.credit);
+        if (deb?.type === 'expense') dayExp += t.amount;
+        if (cred?.type === 'revenue') dayRev += t.amount;
+      });
+
+      let badgeHtml = '';
+      if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${(dayRev/1000).toFixed(0)}k</div>`;
+      if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${(dayExp/1000).toFixed(0)}k</div>`;
+
+      cell.innerHTML = `
+        <span class="day-num">${d}</span>
+        <div>${badgeHtml}</div>
+      `;
+      grid.appendChild(cell);
+    }
+
+    renderDailyList();
+  }
+
+  function renderDailyList() {
+    document.getElementById('selectedDateTitle').textContent = `取引一覧 (${selectedDateStr})`;
+    const container = document.getElementById('dailyTxList');
+    const dayTxs = transactions.filter(t => t.date === selectedDateStr);
+
+    if (dayTxs.length === 0) {
+      container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-sub); padding:12px 0;">この日の取引はありません</div>`;
+      return;
+    }
+
+    let html = '';
+    dayTxs.forEach(tx => {
+      const deb = ACCOUNTS.find(a => a.id === tx.debit)?.name || tx.debit;
+      const cred = ACCOUNTS.find(a => a.id === tx.credit)?.name || tx.credit;
+      html += `
+        <div class="tx-item">
+          <div class="tx-info">
+            <div class="tx-title">${tx.desc}</div>
+            <div class="tx-sub">${deb} ← ${cred}</div>
+          </div>
+          <div class="tx-amount">${tx.amount.toLocaleString()}円</div>
+          <div class="tx-btns">
+            <button class="btn-edit-sm" onclick="editTx(${tx.id})">編集</button>
+            <button class="btn-del-sm" onclick="deleteTx(${tx.id})">削除</button>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
   function render() {
     const balances = {};
     ACCOUNTS.forEach(a => balances[a.id] = 0);
@@ -519,42 +637,35 @@
       balances[tx.credit] -= tx.amount;
     });
 
-    // 表 (P/L) 描画
+    // P/L 描画
     let totalRevenue = 0, totalFixed = 0, totalVariable = 0, plHtml = '';
-
     plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【収入の部】</th></tr>`;
     ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
-      const val = -balances[a.id];
-      totalRevenue += val;
+      const val = -balances[a.id]; totalRevenue += val;
       if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
     plHtml += `<tr style="font-weight:bold; background:#f0fdf4;"><td>収入合計</td><td class="amount">${totalRevenue.toLocaleString()}円</td></tr>`;
 
     plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【固定費】</th></tr>`;
     ACCOUNTS.filter(a => a.category === 'fixed').forEach(a => {
-      const val = balances[a.id];
-      totalFixed += val;
+      const val = balances[a.id]; totalFixed += val;
       if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
-    plHtml += `<tr style="font-weight:bold; background:#fff7ed;"><td>固定費小計</td><td class="amount">${totalFixed.toLocaleString()}円</td></tr>`;
 
     plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【変動費】</th></tr>`;
     ACCOUNTS.filter(a => a.category === 'variable').forEach(a => {
-      const val = balances[a.id];
-      totalVariable += val;
+      const val = balances[a.id]; totalVariable += val;
       if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
-    plHtml += `<tr style="font-weight:bold; background:#fff7ed;"><td>変動費小計</td><td class="amount">${totalVariable.toLocaleString()}円</td></tr>`;
 
     const totalExpense = totalFixed + totalVariable;
     const netSavings = totalRevenue - totalExpense;
 
     plHtml += `<tr style="font-weight:bold; background:#fef2f2;"><td>支出合計</td><td class="amount">${totalExpense.toLocaleString()}円</td></tr>`;
-    plHtml += `<tr style="font-weight:bold; background:#e6fffa; font-size:0.9rem;"><td>今期の収支差額（手残り）</td><td class="amount" style="color:${netSavings >= 0 ? '#0d9488' : '#dc2626'};">${netSavings.toLocaleString()}円</td></tr>`;
-
+    plHtml += `<tr style="font-weight:bold; background:#e6fffa;"><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
     document.getElementById('plBody').innerHTML = plHtml;
 
-    // 表 (B/S) 描画
+    // B/S 描画
     let bsHtml = '', totalAssets = 0, totalLiabilities = 0;
     bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【資産の部】</th></tr>`;
     ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
@@ -568,35 +679,14 @@
     });
 
     const retainedEarnings = balances['equity'] ? -balances['equity'] : 0;
-    const totalEquity = retainedEarnings + netSavings;
-
     bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【純資産の部】</th></tr>`;
     bsHtml += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
     bsHtml += `<tr><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
     bsHtml += `<tr style="font-weight:bold; background:#eff6ff;"><td>資産合計</td><td class="amount">${totalAssets.toLocaleString()}円</td></tr>`;
-    bsHtml += `<tr style="font-weight:bold; background:#fef2f2;"><td>負債・純資産合計</td><td class="amount">${(totalLiabilities + totalEquity).toLocaleString()}円</td></tr>`;
 
     document.getElementById('bsBody').innerHTML = bsHtml;
 
-    // 履歴描画
-    let historyHtml = '';
-    [...transactions].reverse().forEach(tx => {
-      const deb = ACCOUNTS.find(a => a.id === tx.debit)?.name || tx.debit;
-      const cred = ACCOUNTS.find(a => a.id === tx.credit)?.name || tx.credit;
-      historyHtml += `<tr>
-        <td><div style="font-size:0.75rem; color:#64748b;">${tx.date}</div><b>${tx.desc}</b></td>
-        <td><span class="badge">${deb}</span><br>↓<br><span class="badge">${cred}</span></td>
-        <td class="amount">${tx.amount.toLocaleString()}円</td>
-        <td style="text-align:center;">
-          <div class="btn-action-group">
-            <button class="btn-edit" onclick="editTx(${tx.id})">編集</button>
-            <button class="btn-del" onclick="deleteTx(${tx.id})">削除</button>
-          </div>
-        </td>
-      </tr>`;
-    });
-    document.getElementById('historyBody').innerHTML = historyHtml;
-
+    renderCalendar();
     renderCharts(balances);
   }
 
@@ -693,7 +783,6 @@
     });
   }
 
-  // 初回起動時にスプレッドシートから読み込み
   loadFromSpreadsheet();
 </script>
 </body>
