@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>家計簿</title>
-  <!-- グラフ描画ライブラリ Chart.js の読み込み -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -152,6 +151,15 @@
     }
     .nav-item.active { color: var(--primary); font-weight: bold; }
     .nav-icon { font-size: 1.2rem; }
+
+    .loading-banner {
+      background: #fef3c7;
+      color: #92400e;
+      text-align: center;
+      padding: 6px;
+      font-size: 0.8rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -159,6 +167,7 @@
 <header>
   <h1>🔒 家計簿</h1>
 </header>
+<div id="loadingBanner" class="loading-banner">🔄 スプレッドシートからデータを同期中...</div>
 
 <div class="container">
 
@@ -251,6 +260,7 @@
     <div class="card">
       <h2>データ操作</h2>
       <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="syncBtn" style="background:#0284c7;">スプレッドシートから再読み込み</button>
         <button id="backupBtn" class="btn-green">Googleスプレッドシートへ保存</button>
         <button id="clearBtn" class="btn-red">全データを初期化</button>
       </div>
@@ -287,8 +297,8 @@
 </nav>
 
 <script>
-  // ★274行目: Google Apps ScriptのURLを設定してください
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxFJ9nr0LehG6hKQwfftEkawY4Pfnjs55IY1kPtj6soYrzzHqL8TljmAbnl57Ox2Rd_/exec";
+  // ★275行目: Google Apps ScriptのURLを設定してください
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyaGFBg2ibV0T_rBlD0y_e6fi_mfQ2xZ81C4AV5e2yaBBuLMbQiDpveq0l4qSH_Ernp/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
@@ -377,6 +387,28 @@
     if (el) el.classList.add('active');
   }
 
+  // スプレッドシートからの自動読み込み
+  async function loadFromSpreadsheet() {
+    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) return;
+    document.getElementById('loadingBanner').style.display = 'block';
+
+    try {
+      const res = await fetch(GAS_URL);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        transactions = data;
+        localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+        render();
+      }
+    } catch (err) {
+      console.log("クラウド同期スキップ（オフラインまたは初回）");
+    } finally {
+      document.getElementById('loadingBanner').style.display = 'none';
+    }
+  }
+
+  document.getElementById('syncBtn').addEventListener('click', loadFromSpreadsheet);
+
   document.getElementById('txForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const editId = document.getElementById('editId').value;
@@ -389,14 +421,12 @@
     };
 
     if (editId) {
-      // 既存データの更新
       const index = transactions.findIndex(t => t.id === Number(editId));
       if (index !== -1) {
         transactions[index] = { ...transactions[index], ...txData };
         alert("更新しました！");
       }
     } else {
-      // 新規登録
       transactions.push({ id: Date.now(), ...txData });
       alert("登録しました！");
     }
@@ -452,7 +482,6 @@
       alert("GAS_URLを設定してください。");
       return;
     }
-    if (transactions.length === 0) return alert("データがありません。");
 
     const btn = document.getElementById('backupBtn');
     btn.disabled = true;
@@ -465,7 +494,7 @@
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ transactions: transactions })
       });
-      alert("スプレッドシートへ送信しました！");
+      alert("スプレッドシートへ保存しました！");
     } catch (err) {
       alert("送信に失敗しました。");
     } finally {
@@ -568,11 +597,9 @@
     });
     document.getElementById('historyBody').innerHTML = historyHtml;
 
-    // グラフデータの生成＆更新
     renderCharts(balances);
   }
 
-  // 月別グラフの集計と描画
   function renderCharts(currentBalances) {
     const sortedTxs = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
     const months = [...new Set(sortedTxs.map(t => t.date.substring(0, 7)))];
@@ -616,7 +643,6 @@
       bsTrendEquity.push(ast - lia);
     });
 
-    // P/L 推移（折れ線）
     if (chartPLTrend) chartPLTrend.destroy();
     chartPLTrend = new Chart(document.getElementById('plTrendChart'), {
       type: 'line',
@@ -631,7 +657,6 @@
       options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // P/L 円グラフ（支出の内訳）
     const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && currentBalances[a.id] > 0);
     const pieLabels = expAccounts.map(a => a.name);
     const pieData = expAccounts.map(a => currentBalances[a.id]);
@@ -653,7 +678,6 @@
       options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // B/S 推移（折れ線）
     if (chartBSTrend) chartBSTrend.destroy();
     chartBSTrend = new Chart(document.getElementById('bsTrendChart'), {
       type: 'line',
@@ -669,7 +693,8 @@
     });
   }
 
-  render();
+  // 初回起動時にスプレッドシートから読み込み
+  loadFromSpreadsheet();
 </script>
 </body>
 </html>
