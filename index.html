@@ -84,7 +84,6 @@
     .btn-green { background: #10b981; }
     .btn-red { background: #ef4444; }
 
-    /* カレンダー用スタイル */
     .calendar-header {
       display: flex;
       justify-content: space-between;
@@ -223,7 +222,7 @@
     </div>
   </div>
 
-  <!-- タブ②：カレンダー（デフォルトで表示） -->
+  <!-- タブ②：カレンダー -->
   <div id="tab-calendar" class="tab-content active">
     <div class="card">
       <div class="calendar-header">
@@ -312,8 +311,8 @@
 </nav>
 
 <script>
-  // Google Apps ScriptのデプロイURL
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzcXoQjzbUvZjcUg8a9atiqt_pCSNUGC35RAXJ4VRLnsuYlkSwBEYyC8xkO2lmJeFqP/exec";
+  // ⚠️【必須】ご自身のGASデプロイURLに変更してください
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwK9w4amcj7gfENQHargvVk18u9-X9hKuOFVBj_MPMNjz_aPjeL-ojHLMI1MxouiaQt/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
@@ -322,7 +321,7 @@
     { id: 'card', name: 'カード未払金', type: 'liability', category: 'liability' },
     { id: 'equity', name: '過去の蓄積（純資産）', type: 'equity', category: 'equity' },
     
-    { id: 'salary', name: '給与収入', type: 'revenue', category: 'revenue' },
+    { id: 'salary', name: '給料収入', type: 'revenue', category: 'revenue' },
     { id: 'invest_gain', name: '運用益（評価益など）', type: 'revenue', category: 'revenue' },
     { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
 
@@ -351,19 +350,31 @@
   let currentCalDate = new Date();
   let selectedDateStr = new Date().toISOString().split('T')[0];
 
-  // 1. ローカルデータの安全な読み込み（壊れたデータを弾く安全装置）
+  // 日付文字列を YYYY-MM-DD に統一整形する関数（安全装置）
+  function cleanDateStr(dStr) {
+    if (!dStr) return '';
+    let str = String(dStr).trim();
+    if (str.includes('T')) {
+      str = str.split('T')[0];
+    }
+    return str;
+  }
+
   function loadLocalData() {
     try {
       const stored = localStorage.getItem('kakeibo_txs');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          // 日付と金額が正しく保存されているものだけ抽出
-          transactions = parsed.filter(t => t && typeof t.date === 'string' && typeof t.amount === 'number');
+          transactions = parsed.map(t => ({
+            ...t,
+            date: cleanDateStr(t.date),
+            amount: Number(t.amount) || 0
+          }));
         }
       }
     } catch (e) {
-      console.error("データのパースに失敗しました。データをリセットします。", e);
+      console.error("ローカルデータの読み込みエラー", e);
       transactions = [];
     }
   }
@@ -373,6 +384,9 @@
     const creditSelect = document.getElementById('creditAcc');
     if (!debitSelect || !creditSelect) return;
     
+    debitSelect.innerHTML = '';
+    creditSelect.innerHTML = '';
+
     const debitGroups = [
       { label: '💰 変動費（使った目的）', category: 'variable' },
       { label: '📌 固定費（使った目的）', category: 'fixed' },
@@ -416,13 +430,12 @@
     document.getElementById(`tab-${tabName}`).classList.add('active');
     if (el) el.classList.add('active');
     
-    // タブを切り替えたらグラフを再描画してサイズを合わせる
     render();
   }
 
   async function loadFromSpreadsheet() {
     if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
-      render(); // デフォルト設定の場合はスキップして描画
+      render();
       return;
     }
     const banner = document.getElementById('loadingBanner');
@@ -432,25 +445,28 @@
       const res = await fetch(GAS_URL);
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        transactions = data;
+        transactions = data.map(t => ({
+          ...t,
+          date: cleanDateStr(t.date),
+          amount: Number(t.amount) || 0
+        }));
         localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       }
     } catch (err) {
-      console.log("クラウド同期スキップ（設定がないか通信エラー）");
+      console.log("スプレッドシート読み込みエラー", err);
     } finally {
       if(banner) banner.style.display = 'none';
       render();
     }
   }
 
-  // 以下、入力・編集・削除処理
   const txForm = document.getElementById('txForm');
   if (txForm) {
     txForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const editId = document.getElementById('editId').value;
       const txData = {
-        date: document.getElementById('date').value,
+        date: cleanDateStr(document.getElementById('date').value),
         desc: document.getElementById('desc').value,
         debit: document.getElementById('debitAcc').value,
         credit: document.getElementById('creditAcc').value,
@@ -472,7 +488,6 @@
       localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       resetForm();
       render();
-      // 登録完了後にカレンダータブへ移動
       switchTab('calendar', document.querySelectorAll('.nav-item')[1]);
     });
   }
@@ -552,7 +567,7 @@
   const clearBtn = document.getElementById('clearBtn');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
-      if (confirm('【注意】全データを削除しますか？（エラーが直らない場合にお試しください）')) {
+      if (confirm('【注意】全データを削除しますか？')) {
         transactions = [];
         localStorage.removeItem('kakeibo_txs');
         render();
@@ -561,7 +576,6 @@
     });
   }
 
-  // カレンダー関連処理
   function changeMonth(diff) {
     currentCalDate.setMonth(currentCalDate.getMonth() + diff);
     renderCalendar();
@@ -598,7 +612,6 @@
       const lastDate = new Date(year, month + 1, 0).getDate();
       const prevLastDate = new Date(year, month, 0).getDate();
 
-      // 前月埋め
       for (let i = firstDay - 1; i >= 0; i--) {
         const cell = document.createElement('div');
         cell.className = 'calendar-cell other-month';
@@ -606,7 +619,6 @@
         grid.appendChild(cell);
       }
 
-      // 当月
       for (let d = 1; d <= lastDate; d++) {
         const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const cell = document.createElement('div');
@@ -614,7 +626,7 @@
         cell.onclick = () => selectDate(dStr);
 
         let dayExp = 0, dayRev = 0;
-        transactions.filter(t => t.date === dStr).forEach(t => {
+        transactions.filter(t => cleanDateStr(t.date) === dStr).forEach(t => {
           const deb = ACCOUNTS.find(a => a.id === t.debit);
           const cred = ACCOUNTS.find(a => a.id === t.credit);
           if (deb?.type === 'expense') dayExp += t.amount;
@@ -633,7 +645,7 @@
       }
       renderDailyList();
     } catch (e) {
-      console.error("カレンダーの描画に失敗しました", e);
+      console.error("カレンダーの描画エラー", e);
     }
   }
 
@@ -645,7 +657,7 @@
       const container = document.getElementById('dailyTxList');
       if (!container) return;
 
-      const dayTxs = transactions.filter(t => t.date === selectedDateStr);
+      const dayTxs = transactions.filter(t => cleanDateStr(t.date) === selectedDateStr);
 
       if (dayTxs.length === 0) {
         container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-sub); padding:12px 0;">この日の取引はありません</div>`;
@@ -672,7 +684,7 @@
       });
       container.innerHTML = html;
     } catch (e) {
-      console.error("取引一覧の描画に失敗しました", e);
+      console.error("取引一覧の描画エラー", e);
     }
   }
 
@@ -681,12 +693,10 @@
       const balances = {};
       ACCOUNTS.forEach(a => balances[a.id] = 0);
       transactions.forEach(tx => {
-        // 安全のためNaNにならないようチェック
         if (balances[tx.debit] !== undefined) balances[tx.debit] += (tx.amount || 0);
         if (balances[tx.credit] !== undefined) balances[tx.credit] -= (tx.amount || 0);
       });
 
-      // P/L 描画
       let totalRevenue = 0, totalFixed = 0, totalVariable = 0, plHtml = '';
       plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【収入の部】</th></tr>`;
       ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
@@ -715,7 +725,6 @@
       const plBody = document.getElementById('plBody');
       if (plBody) plBody.innerHTML = plHtml;
 
-      // B/S 描画
       let bsHtml = '', totalAssets = 0, totalLiabilities = 0;
       bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【資産の部】</th></tr>`;
       ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
@@ -740,17 +749,16 @@
       renderCalendar();
       renderCharts(balances);
     } catch(e) {
-      console.error("画面の描画中にエラーが発生しました", e);
+      console.error("画面の描画エラー", e);
     }
   }
 
   function renderCharts(currentBalances) {
     try {
-      if (typeof Chart === 'undefined') return; // Chart.jsが読み込めていない場合はスキップ
+      if (typeof Chart === 'undefined') return;
 
-      // 安全にソート (a.dateが未定義の古いデータを保護)
-      const sortedTxs = [...transactions].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-      const months = [...new Set(sortedTxs.map(t => (t.date || '').substring(0, 7)).filter(d => d))];
+      const sortedTxs = [...transactions].sort((a, b) => cleanDateStr(a.date).localeCompare(cleanDateStr(b.date)));
+      const months = [...new Set(sortedTxs.map(t => cleanDateStr(t.date).substring(0, 7)).filter(d => d))];
 
       const plTrendRevenue = [];
       const plTrendExpense = [];
@@ -764,7 +772,7 @@
 
       months.forEach(m => {
         let mRev = 0, mExp = 0;
-        const mTxs = sortedTxs.filter(t => (t.date || '').startsWith(m));
+        const mTxs = sortedTxs.filter(t => cleanDateStr(t.date).startsWith(m));
 
         mTxs.forEach(tx => {
           if (runningBalances[tx.debit] !== undefined) runningBalances[tx.debit] += (tx.amount || 0);
@@ -848,11 +856,10 @@
         });
       }
     } catch(e) {
-      console.error("グラフの描画に失敗しました", e);
+      console.error("グラフ描画エラー", e);
     }
   }
 
-  // 2. 画面のHTML要素が全て読み込まれてから安全に起動する
   window.addEventListener('DOMContentLoaded', () => {
     loadLocalData();
     setupAccountSelects();
