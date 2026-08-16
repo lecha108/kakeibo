@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>家計簿</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- 外側にラベル・パーセンテージを表示するためのプラグインを追加 -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     :root {
@@ -36,7 +35,7 @@
     }
     header h1 { font-size: 1.1rem; color: #1e293b; }
 
-    .container { max-width: 600px; margin: 0 auto; padding: 12px; }
+    .container { max-width: 680px; margin: 0 auto; padding: 12px; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -156,9 +155,53 @@
     th { background: #f8fafc; color: var(--text-sub); font-size: 0.75rem; }
     .amount { text-align: right; white-space: nowrap; }
 
+    /* 左右対称B/S（T字型）用のスタイル */
+    .bs-t-container {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      margin-top: 8px;
+      padding-bottom: 4px;
+    }
+    .bs-t-box {
+      flex: 1;
+      min-width: 270px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .bs-t-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .bs-t-table th {
+      background: #fef08a; /* 画像のイメージに合わせた見出しカラー */
+      color: #713f12;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.85rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .bs-t-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bs-sub-header {
+      background: #f8fafc;
+      font-weight: bold;
+      color: var(--text-sub);
+      font-size: 0.78rem;
+    }
+    .bs-total-row {
+      background: #fef08a;
+      font-weight: bold;
+      color: #1e293b;
+    }
+
     .chart-container { position: relative; margin-top: 12px; width: 100%; height: 250px; }
     
-    /* ドーナツグラフ用コンテナ */
     .pie-chart-container {
       position: relative;
       margin: 0 auto;
@@ -318,12 +361,7 @@
     </div>
     <div class="card">
       <h2>貸借対照表 (B/S)</h2>
-      <div class="table-responsive">
-        <table>
-          <thead><tr><th>区分 / 科目</th><th class="amount">金額</th></tr></thead>
-          <tbody id="bsBody"></tbody>
-        </table>
-      </div>
+      <div id="bsBody"></div>
     </div>
   </div>
 
@@ -346,7 +384,6 @@
 </nav>
 
 <script>
-  // ⚠️【必須】ご自身のGASデプロイURLに変更してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwK9w4amcj7gfENQHargvVk18u9-X9hKuOFVBj_MPMNjz_aPjeL-ojHLMI1MxouiaQt/exec";
 
   const ACCOUNTS = [
@@ -385,7 +422,6 @@
   let currentCalDate = new Date();
   let selectedDateStr = new Date().toISOString().split('T')[0];
 
-  // 日付文字列を時差（JST）を考慮して YYYY-MM-DD に統一整形する関数
   function cleanDateStr(dStr) {
     if (!dStr) return '';
     let str = String(dStr).trim();
@@ -416,7 +452,6 @@
         }
       }
     } catch (e) {
-      console.error("ローカルデータの読み込みエラー", e);
       transactions = [];
     }
   }
@@ -583,7 +618,7 @@
   if (backupBtn) {
     backupBtn.addEventListener('click', async () => {
       if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
-        alert("GAS_URLが設定されていません。コード内の GAS_URL を変更してください。");
+        alert("GAS_URLが設定されていません。");
         return;
       }
       backupBtn.disabled = true;
@@ -675,7 +710,6 @@
           if (cred?.type === 'revenue') dayRev += t.amount;
         });
 
-        // 金額をカンマ区切りの正確な数値で表示
         let badgeHtml = '';
         if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${dayRev.toLocaleString()}</div>`;
         if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${dayExp.toLocaleString()}</div>`;
@@ -687,9 +721,7 @@
         grid.appendChild(cell);
       }
       renderDailyList();
-    } catch (e) {
-      console.error("カレンダーの描画エラー", e);
-    }
+    } catch (e) {}
   }
 
   function renderDailyList() {
@@ -726,9 +758,7 @@
         `;
       });
       container.innerHTML = html;
-    } catch (e) {
-      console.error("取引一覧の描画エラー", e);
-    }
+    } catch (e) {}
   }
 
   function render() {
@@ -768,36 +798,67 @@
       const plBody = document.getElementById('plBody');
       if (plBody) plBody.innerHTML = plHtml;
 
-      // 円グラフの中央に支出合計を表示
       const centerAmountEl = document.getElementById('pieCenterAmount');
       if (centerAmountEl) centerAmountEl.textContent = `${totalExpense.toLocaleString()}円`;
 
-      let bsHtml = '', totalAssets = 0, totalLiabilities = 0;
-      bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【資産の部】</th></tr>`;
+      // ── B/S（左右対称 T字型レイアウトの構築） ──
+      let totalAssets = 0, totalLiabilities = 0;
+      
+      // 左側：資産の部
+      let assetRows = '';
       ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
-        const val = balances[a.id]; totalAssets += val;
-        bsHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+        const val = balances[a.id];
+        totalAssets += val;
+        assetRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
       });
-      bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【負債の部】</th></tr>`;
+
+      // 右側：負債・純資産の部
+      let liabilityAndEquityRows = '';
+      liabilityAndEquityRows += `<tr class="bs-sub-header"><td colspan="2">【負債の部】</td></tr>`;
       ACCOUNTS.filter(a => a.type === 'liability').forEach(a => {
-        const val = -balances[a.id]; totalLiabilities += val;
-        bsHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+        const val = -balances[a.id];
+        totalLiabilities += val;
+        liabilityAndEquityRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
       });
 
       const retainedEarnings = balances['equity'] ? -balances['equity'] : 0;
-      bsHtml += `<tr style="background:#f8fafc;"><th colspan="2">【純資産の部】</th></tr>`;
-      bsHtml += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
-      bsHtml += `<tr><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
-      bsHtml += `<tr style="font-weight:bold; background:#eff6ff;"><td>資産合計</td><td class="amount">${totalAssets.toLocaleString()}円</td></tr>`;
+      liabilityAndEquityRows += `<tr class="bs-sub-header"><td colspan="2">【純資産の部】</td></tr>`;
+      liabilityAndEquityRows += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
+      liabilityAndEquityRows += `<tr><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
+
+      const totalLiabAndEquity = totalLiabilities + retainedEarnings + netSavings;
+
+      const bsContainerHtml = `
+        <div class="bs-t-container">
+          <!-- 資産サイド -->
+          <div class="bs-t-box">
+            <table class="bs-t-table">
+              <thead><tr><th>資産</th><th class="amount">金額</th></tr></thead>
+              <tbody>
+                ${assetRows}
+                <tr class="bs-total-row"><td>資産合計</td><td class="amount">${totalAssets.toLocaleString()}円</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 負債・純資産サイド -->
+          <div class="bs-t-box">
+            <table class="bs-t-table">
+              <thead><tr><th>負債・純資産</th><th class="amount">金額</th></tr></thead>
+              <tbody>
+                ${liabilityAndEquityRows}
+                <tr class="bs-total-row"><td>負債・純資産合計</td><td class="amount">${totalLiabAndEquity.toLocaleString()}円</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
 
       const bsBody = document.getElementById('bsBody');
-      if (bsBody) bsBody.innerHTML = bsHtml;
+      if (bsBody) bsBody.innerHTML = bsContainerHtml;
 
       renderCalendar();
       renderCharts(balances);
-    } catch(e) {
-      console.error("画面の描画エラー", e);
-    }
+    } catch(e) {}
   }
 
   function renderCharts(currentBalances) {
@@ -845,7 +906,6 @@
         bsTrendEquity.push(ast - lia);
       });
 
-      // P/L 推移グラフ
       const plTrendCanvas = document.getElementById('plTrendChart');
       if (plTrendCanvas) {
         if (chartPLTrend) chartPLTrend.destroy();
@@ -863,7 +923,6 @@
         });
       }
 
-      // ドーナツ型支出内訳グラフ（datalabels使用）
       const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && currentBalances[a.id] > 0);
       const pieLabels = expAccounts.map(a => a.name);
       const pieData = expAccounts.map(a => currentBalances[a.id]);
@@ -880,7 +939,6 @@
         if (chartPLPie) chartPLPie.destroy();
         
         if (pieData.length > 0) {
-          // ChartDataLabels プラグインの登録確認
           const pluginsConfig = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
 
           chartPLPie = new Chart(plPieCanvas, {
@@ -899,13 +957,9 @@
               responsive: true,
               maintainAspectRatio: false,
               cutout: '68%',
-              layout: {
-                padding: 45
-              },
+              layout: { padding: 45 },
               plugins: {
-                legend: {
-                  display: false
-                },
+                legend: { display: false },
                 tooltip: {
                   callbacks: {
                     label: function(context) {
@@ -922,15 +976,12 @@
                   color: function(context) {
                     return categoryColors[context.dataIndex % categoryColors.length];
                   },
-                  font: {
-                    weight: 'bold',
-                    size: 10
-                  },
+                  font: { weight: 'bold', size: 10 },
                   textAlign: 'center',
                   formatter: function(value, context) {
                     if (totalExpSum === 0) return '';
                     const pct = Math.round((value / totalExpSum) * 100);
-                    if (pct < 2) return ''; // 2%未満は重なり防止のため非表示
+                    if (pct < 2) return '';
                     const label = context.chart.data.labels[context.dataIndex];
                     return `${label}\n${pct}%`;
                   }
@@ -941,7 +992,6 @@
         }
       }
 
-      // B/S 推移グラフ
       const bsTrendCanvas = document.getElementById('bsTrendChart');
       if (bsTrendCanvas) {
         if (chartBSTrend) chartBSTrend.destroy();
@@ -952,15 +1002,13 @@
             datasets: [
               { label: '純資産（蓄積）', data: bsTrendEquity, borderColor: '#2563eb', tension: 0.2, borderWidth: 3 },
               { label: '総資産', data: bsTrendAssets, borderColor: '#10b981', tension: 0.2 },
-              { label: '負債（カード未払等）', data: bsTrendLiabilities, borderColor: '#ef4444', tension: 0.2 }
+              { label: '負債', data: bsTrendLiabilities, borderColor: '#ef4444', tension: 0.2 }
             ]
           },
           options: { responsive: true, maintainAspectRatio: false }
         });
       }
-    } catch(e) {
-      console.error("グラフ描画エラー", e);
-    }
+    } catch(e) {}
   }
 
   window.addEventListener('DOMContentLoaded', () => {
