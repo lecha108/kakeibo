@@ -155,7 +155,6 @@
     th { background: #f8fafc; color: var(--text-sub); font-size: 0.75rem; }
     .amount { text-align: right; white-space: nowrap; }
 
-    /* 左右対称B/S（T字型）用のスタイル */
     .bs-t-container {
       display: flex;
       gap: 12px;
@@ -177,7 +176,7 @@
       font-size: 0.82rem;
     }
     .bs-t-table th {
-      background: #fef08a; /* 画像のイメージに合わせた見出しカラー */
+      background: #fef08a;
       color: #713f12;
       text-align: center;
       padding: 8px;
@@ -301,7 +300,7 @@
     <div class="card">
       <div class="calendar-header">
         <button onclick="changeMonth(-1)">◀ 前月</button>
-        <h3 id="calendarTitle">2026年 8月</h3>
+        <h3 id="calendarTitle"></h3>
         <button onclick="changeMonth(1)">次月 ▶</button>
       </div>
       <div class="calendar-grid" id="calendarGrid"></div>
@@ -315,8 +314,8 @@
     <div class="card">
       <h2>データ同期・設定</h2>
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="syncBtn" style="background:#0284c7;">スプレッドシートから再読み込み</button>
-        <button id="backupBtn" class="btn-green">Googleスプレッドシートへ保存</button>
+        <button id="syncBtn" style="background:#0284c7;">スプレッドシートから全読み込み</button>
+        <button id="backupBtn" class="btn-green">未送信の差分のみ追記保存</button>
         <button id="clearBtn" class="btn-red">全データを初期化（エラー解消用）</button>
       </div>
     </div>
@@ -384,7 +383,7 @@
 </nav>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwK9w4amcj7gfENQHargvVk18u9-X9hKuOFVBj_MPMNjz_aPjeL-ojHLMI1MxouiaQt/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwPyn0O67OWWlrQIWRWTLGBJ18dvLJC_y-Fn2MylJHLnNAxbQoGDjoWSX4g5wlJKBtq/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
@@ -447,7 +446,8 @@
           transactions = parsed.map(t => ({
             ...t,
             date: cleanDateStr(t.date),
-            amount: Number(t.amount) || 0
+            amount: Number(t.amount) || 0,
+            synced: t.synced === true // 同期フラグの設定
           }));
         }
       }
@@ -525,7 +525,8 @@
         transactions = data.map(t => ({
           ...t,
           date: cleanDateStr(t.date),
-          amount: Number(t.amount) || 0
+          amount: Number(t.amount) || 0,
+          synced: true // スプレッドシートから取得したデータはすべて同期済み扱いにする
         }));
         localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       }
@@ -547,7 +548,8 @@
         desc: document.getElementById('desc').value,
         debit: document.getElementById('debitAcc').value,
         credit: document.getElementById('creditAcc').value,
-        amount: Number(document.getElementById('amount').value)
+        amount: Number(document.getElementById('amount').value),
+        synced: false // 新規または更新データは未同期にする
       };
 
       if (editId) {
@@ -614,6 +616,7 @@
   const syncBtn = document.getElementById('syncBtn');
   if (syncBtn) syncBtn.addEventListener('click', loadFromSpreadsheet);
 
+  // ★ 差分追記バックアップ機能
   const backupBtn = document.getElementById('backupBtn');
   if (backupBtn) {
     backupBtn.addEventListener('click', async () => {
@@ -621,22 +624,36 @@
         alert("GAS_URLが設定されていません。");
         return;
       }
+
+      // 未同期の差分データを抽出
+      const unsyncedTxs = transactions.filter(t => !t.synced);
+
+      if (unsyncedTxs.length === 0) {
+        alert("追記保存する新しいデータはありません。");
+        return;
+      }
+
       backupBtn.disabled = true;
-      backupBtn.textContent = "送信中...";
+      backupBtn.textContent = `差分データ (${unsyncedTxs.length}件) を送信中...`;
 
       try {
         await fetch(GAS_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ transactions: transactions })
+          body: JSON.stringify({ transactions: unsyncedTxs })
         });
-        alert("スプレッドシートへ保存しました！");
+
+        // 送信に成功したデータの同期フラグを true に変更
+        unsyncedTxs.forEach(t => t.synced = true);
+        localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+
+        alert(`${unsyncedTxs.length}件の差分データをスプレッドシートへ追記保存しました！`);
       } catch (err) {
         alert("送信に失敗しました。");
       } finally {
         backupBtn.disabled = false;
-        backupBtn.textContent = "Googleスプレッドシートへ保存";
+        backupBtn.textContent = "未送信の差分のみ追記保存";
       }
     });
   }
@@ -804,7 +821,6 @@
       // ── B/S（左右対称 T字型レイアウトの構築） ──
       let totalAssets = 0, totalLiabilities = 0;
       
-      // 左側：資産の部
       let assetRows = '';
       ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
         const val = balances[a.id];
@@ -812,7 +828,6 @@
         assetRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
       });
 
-      // 右側：負債・純資産の部
       let liabilityAndEquityRows = '';
       liabilityAndEquityRows += `<tr class="bs-sub-header"><td colspan="2">【負債の部】</td></tr>`;
       ACCOUNTS.filter(a => a.type === 'liability').forEach(a => {
@@ -830,7 +845,6 @@
 
       const bsContainerHtml = `
         <div class="bs-t-container">
-          <!-- 資産サイド -->
           <div class="bs-t-box">
             <table class="bs-t-table">
               <thead><tr><th>資産</th><th class="amount">金額</th></tr></thead>
@@ -840,7 +854,6 @@
               </tbody>
             </table>
           </div>
-          <!-- 負債・純資産サイド -->
           <div class="bs-t-box">
             <table class="bs-t-table">
               <thead><tr><th>負債・純資産</th><th class="amount">金額</th></tr></thead>
