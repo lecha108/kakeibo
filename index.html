@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     :root {
-      --bg: #f8fafc;
+      --bg: #f4f6f9;
       --card: #ffffff;
       --primary: #2563eb;
       --text: #0f172a;
@@ -35,7 +35,7 @@
     }
     header h1 { font-size: 1.1rem; color: #1e293b; }
 
-    .container { max-width: 680px; margin: 0 auto; padding: 12px; }
+    .container { max-width: 760px; margin: 0 auto; padding: 16px; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -44,102 +44,77 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     }
-    .card h2 { font-size: 1rem; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 6px; }
+    
+    /* カードヘッダー（月選択ドロップダウン用） */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+    }
+    .card-header h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+      color: #1e293b;
+    }
+    .month-select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      font-weight: bold;
+      color: #334155;
+      cursor: pointer;
+      outline: none;
+    }
+    .month-select:focus { border-color: var(--primary); }
 
+    /* フォーム関連 */
     .form-group { margin-bottom: 12px; }
     label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-bottom: 4px; }
     input, select, button {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.95rem;
-      background: #fff;
+      width: 100%; padding: 12px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.95rem; background: #fff;
     }
     .form-row { display: flex; gap: 8px; }
     .form-row > div { flex: 1; }
 
     .guide-box {
-      background: #eff6ff;
-      border-left: 4px solid var(--primary);
-      padding: 8px 12px;
-      font-size: 0.75rem;
-      color: #1e40af;
-      margin-bottom: 12px;
-      border-radius: 0 6px 6px 0;
-      line-height: 1.4;
+      background: #eff6ff; border-left: 4px solid var(--primary); padding: 8px 12px;
+      font-size: 0.75rem; color: #1e40af; margin-bottom: 12px; border-radius: 0 6px 6px 0; line-height: 1.4;
     }
 
-    button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
     button:active { opacity: 0.8; }
     .btn-green { background: #10b981; }
     .btn-red { background: #ef4444; }
 
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
+    /* カレンダー */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .calendar-header h3 { font-size: 1.1rem; }
     .calendar-header button { width: auto; padding: 6px 16px; font-size: 0.85rem; }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      background: var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .calendar-day-head {
-      background: #f1f5f9;
-      text-align: center;
-      padding: 6px 0;
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: var(--text-sub);
-    }
-    .calendar-cell {
-      background: #fff;
-      min-height: 52px;
-      padding: 4px 2px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      cursor: pointer;
-      position: relative;
-    }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--border); border-radius: 8px; overflow: hidden; }
+    .calendar-day-head { background: #f1f5f9; text-align: center; padding: 6px 0; font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
+    .calendar-cell { background: #fff; min-height: 52px; padding: 4px 2px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; position: relative; }
     .calendar-cell.other-month { background: #fafafa; opacity: 0.4; }
     .calendar-cell.selected { background: #eff6ff; outline: 2px solid var(--primary); z-index: 1; }
     .day-num { font-size: 0.75rem; font-weight: bold; color: var(--text); }
-    .day-badge {
-      font-size: 0.58rem;
-      line-height: 1.1;
-      text-align: right;
-      padding-right: 2px;
-      white-space: nowrap;
-    }
+    .day-badge { font-size: 0.58rem; line-height: 1.1; text-align: right; padding-right: 2px; white-space: nowrap; }
     .badge-exp { color: #ef4444; }
     .badge-rev { color: #10b981; }
 
-    .tx-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    /* 取引リスト */
+    .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .tx-item:last-child { border-bottom: none; }
     .tx-info { flex: 1; }
     .tx-title { font-size: 0.9rem; font-weight: bold; }
@@ -149,85 +124,34 @@
     .btn-edit-sm { background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
     .btn-del-sm { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
 
+    /* P/L テーブルスタイル */
     .table-responsive { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
-    th, td { border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: left; }
-    th { background: #f8fafc; color: var(--text-sub); font-size: 0.75rem; }
+    .pl-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .pl-table th, .pl-table td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; }
+    .pl-table th { color: var(--text-sub); font-size: 0.75rem; font-weight: normal; }
+    .pl-section-title { font-weight: bold; color: var(--text-sub); font-size: 0.8rem; background: #f8fafc; }
     .amount { text-align: right; white-space: nowrap; }
+    .bg-green-light { background: #f0fdf4 !important; font-weight: bold; }
+    .bg-red-light { background: #fef2f2 !important; font-weight: bold; }
+    .bg-cyan-light { background: #e6fffa !important; font-weight: bold; }
 
-    .bs-t-container {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      margin-top: 8px;
-      padding-bottom: 4px;
-    }
-    .bs-t-box {
-      flex: 1;
-      min-width: 270px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .bs-t-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-    .bs-t-table th {
-      background: #fef08a;
-      color: #713f12;
-      text-align: center;
-      padding: 8px;
-      font-size: 0.85rem;
-      border-bottom: 2px solid var(--border);
-    }
-    .bs-t-table td {
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .bs-sub-header {
-      background: #f8fafc;
-      font-weight: bold;
-      color: var(--text-sub);
-      font-size: 0.78rem;
-    }
-    .bs-total-row {
-      background: #fef08a;
-      font-weight: bold;
-      color: #1e293b;
-    }
+    /* B/S テーブルスタイル */
+    .bs-t-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+    .bs-t-box { flex: 1; min-width: 270px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+    .bs-t-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .bs-t-table th { background: #fef08a; color: #1e293b; text-align: center; padding: 10px 8px; font-size: 0.9rem; border-bottom: 2px solid var(--border); }
+    .bs-t-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    .bs-sub-header { background: #f8fafc; font-weight: bold; color: var(--text-sub); font-size: 0.8rem; }
+    .bs-total-row { background: #fef08a; font-weight: bold; color: #1e293b; }
 
+    /* グラフコンテナ */
     .chart-container { position: relative; margin-top: 12px; width: 100%; height: 250px; }
-    
-    .pie-chart-container {
-      position: relative;
-      margin: 0 auto;
-      width: 100%;
-      max-width: 380px;
-      height: 320px;
-    }
-    .pie-center-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
-    }
-    .pie-center-title {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      font-weight: bold;
-    }
-    .pie-center-amount {
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: var(--text);
-      margin-top: 2px;
-    }
+    .pie-chart-container { position: relative; margin: 0 auto; width: 100%; max-width: 400px; height: 320px; }
+    .pie-center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .pie-center-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; }
+    .pie-center-amount { font-size: 1.3rem; font-weight: bold; color: var(--text); margin-top: 2px; }
 
+    /* 下部ナビゲーション */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--card); border-top: 1px solid var(--border);
@@ -241,9 +165,7 @@
     .nav-item.active { color: var(--primary); font-weight: bold; }
     .nav-icon { font-size: 1.2rem; }
 
-    .loading-banner {
-      background: #fef3c7; color: #92400e; text-align: center; padding: 6px; font-size: 0.8rem; display: none;
-    }
+    .loading-banner { background: #fef3c7; color: #92400e; text-align: center; padding: 6px; font-size: 0.8rem; display: none; }
   </style>
 </head>
 <body>
@@ -255,10 +177,12 @@
 
 <div class="container">
 
-  <!-- タブ①：入力フォーム -->
+  <!-- ================= タブ①：入力フォーム ================= -->
   <div id="tab-input" class="tab-content">
     <div class="card">
-      <h2 id="formTitle">取引の入力</h2>
+      <div class="card-header">
+        <h2 id="formTitle">取引の入力</h2>
+      </div>
       <div class="guide-box">
         💡 <b>簡単えらび方ガイド</b><br>
         ・<b>買い物・支払いのとき：</b> 左に使った費目、右に払った口座やカード<br>
@@ -295,7 +219,7 @@
     </div>
   </div>
 
-  <!-- タブ②：カレンダー -->
+  <!-- ================= タブ②：カレンダー ================= -->
   <div id="tab-calendar" class="tab-content active">
     <div class="card">
       <div class="calendar-header">
@@ -307,12 +231,16 @@
     </div>
 
     <div class="card">
-      <h2 id="selectedDateTitle">取引一覧</h2>
+      <div class="card-header">
+        <h2 id="selectedDateTitle">取引一覧</h2>
+      </div>
       <div id="dailyTxList"></div>
     </div>
 
     <div class="card">
-      <h2>データ同期・設定</h2>
+      <div class="card-header">
+        <h2>データ同期・設定</h2>
+      </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button id="syncBtn" style="background:#0284c7;">スプレッドシートから全読み込み</button>
         <button id="backupBtn" class="btn-green">未送信の差分のみ追記保存</button>
@@ -321,16 +249,25 @@
     </div>
   </div>
 
-  <!-- タブ③：損益計算書 (P/L) -->
+  <!-- ================= タブ③：損益計算書 (P/L) ================= -->
   <div id="tab-pl" class="tab-content">
+    
+    <!-- 1. 月間推移グラフ -->
     <div class="card">
-      <h2>月間推移（収入・支出・手残り）</h2>
+      <div class="card-header">
+        <h2>月間推移（収入・支出・手残り）</h2>
+      </div>
       <div class="chart-container">
         <canvas id="plTrendChart"></canvas>
       </div>
     </div>
+    
+    <!-- 2. 支出の内訳（円グラフ） 月選択付き -->
     <div class="card">
-      <h2>支出の内訳（円グラフ）</h2>
+      <div class="card-header">
+        <h2>支出の内訳（円グラフ）</h2>
+        <select id="pieMonthSelect" class="month-select"></select>
+      </div>
       <div class="pie-chart-container">
         <div class="pie-center-text">
           <div class="pie-center-title">支出合計</div>
@@ -339,10 +276,15 @@
         <canvas id="plPieChart"></canvas>
       </div>
     </div>
+
+    <!-- 3. 損益計算書 (P/L) 月選択付き -->
     <div class="card">
-      <h2>損益計算書 (P/L) 累計</h2>
+      <div class="card-header">
+        <h2>損益計算書 (P/L)</h2>
+        <select id="plTableMonthSelect" class="month-select"></select>
+      </div>
       <div class="table-responsive">
-        <table>
+        <table class="pl-table">
           <thead><tr><th>科目</th><th class="amount">金額</th></tr></thead>
           <tbody id="plBody"></tbody>
         </table>
@@ -350,16 +292,25 @@
     </div>
   </div>
 
-  <!-- タブ④：貸借対照表 (B/S) -->
+  <!-- ================= タブ④：貸借対照表 (B/S) ================= -->
   <div id="tab-bs" class="tab-content">
+    
+    <!-- 1. 月間推移グラフ -->
     <div class="card">
-      <h2>純資産・資産・負債の月間推移</h2>
+      <div class="card-header">
+        <h2>純資産・資産・負債の月間推移</h2>
+      </div>
       <div class="chart-container">
         <canvas id="bsTrendChart"></canvas>
       </div>
     </div>
+
+    <!-- 2. 貸借対照表 (B/S) 月選択付き -->
     <div class="card">
-      <h2>貸借対照表 (B/S)</h2>
+      <div class="card-header">
+        <h2>貸借対照表 (B/S)</h2>
+        <select id="bsTableMonthSelect" class="month-select"></select>
+      </div>
       <div id="bsBody"></div>
     </div>
   </div>
@@ -383,43 +334,47 @@
 </nav>
 
 <script>
+  // GASのデプロイURLを設定（空の場合はローカル保存のみ）
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwJSx6QgfSISA5iwqbaSj6GDxSdXLD88M1ud-SKakQLlma-_Yi0VeUv1FGTgyB6TcrG/exec";
 
+  // 科目マスタ
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
     { id: 'investment', name: '投資信託・有価証券', type: 'asset', category: 'asset' },
+    
     { id: 'card', name: 'カード未払金', type: 'liability', category: 'liability' },
-    { id: 'equity', name: '過去の蓄積（純資産）', type: 'equity', category: 'equity' },
+    
+    { id: 'equity', name: '過去の蓄積（繰越金）', type: 'equity', category: 'equity' },
     
     { id: 'salary', name: '給料収入', type: 'revenue', category: 'revenue' },
-    { id: 'invest_gain', name: '運用益（評価益など）', type: 'revenue', category: 'revenue' },
     { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
 
     { id: 'rent', name: '住居費・家賃', type: 'expense', category: 'fixed' },
     { id: 'utility', name: '光熱水道費', type: 'expense', category: 'fixed' },
     { id: 'telecom', name: '通信費（携帯・ネット）', type: 'expense', category: 'fixed' },
     { id: 'subscription', name: 'サブスク・定額費', type: 'expense', category: 'fixed' },
-    { id: 'insurance', name: '保険料', type: 'expense', category: 'fixed' },
 
     { id: 'food_grocery', name: '食料品費', type: 'expense', category: 'variable' },
     { id: 'food_out', name: '外食代', type: 'expense', category: 'variable' },
     { id: 'med_treatment', name: '治療費・診察代', type: 'expense', category: 'variable' },
-    { id: 'med_drug', name: '医薬品代', type: 'expense', category: 'variable' },
     { id: 'daily', name: '日用品費', type: 'expense', category: 'variable' },
     { id: 'beauty', name: '美容費', type: 'expense', category: 'variable' },
     { id: 'car', name: '自動車費（ガソリン等）', type: 'expense', category: 'variable' },
-    { id: 'transport', name: '交通費', type: 'expense', category: 'variable' },
     { id: 'education', name: '教養・勉強費', type: 'expense', category: 'variable' },
     { id: 'hobby', name: '娯楽・趣味費', type: 'expense', category: 'variable' },
-    { id: 'invest_loss', name: '運用損（評価損など）', type: 'expense', category: 'variable' },
-    { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' },
+    { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' }
   ];
 
   let transactions = [];
   let chartPLTrend = null, chartPLPie = null, chartBSTrend = null;
   let currentCalDate = new Date();
   let selectedDateStr = new Date().toISOString().split('T')[0];
+
+  // ドロップダウンで選択中の月 (YYYY-MM形式)
+  let currentPieMonth = "";
+  let currentPLMonth = "";
+  let currentBSMonth = "";
 
   function cleanDateStr(dStr) {
     if (!dStr) return '';
@@ -437,6 +392,12 @@
     return str;
   }
 
+  function getUniqueMonths() {
+    const sorted = [...transactions].sort((a, b) => cleanDateStr(a.date).localeCompare(cleanDateStr(b.date)));
+    const mSet = new Set(sorted.map(t => cleanDateStr(t.date).substring(0, 7)).filter(d => d));
+    return Array.from(mSet);
+  }
+
   function loadLocalData() {
     try {
       const stored = localStorage.getItem('kakeibo_txs');
@@ -447,13 +408,11 @@
             ...t,
             date: cleanDateStr(t.date),
             amount: Number(t.amount) || 0,
-            synced: t.synced === true // 同期フラグの設定
+            synced: t.synced === true
           }));
         }
       }
-    } catch (e) {
-      transactions = [];
-    }
+    } catch (e) { transactions = []; }
   }
 
   function setupAccountSelects() {
@@ -503,41 +462,12 @@
   function switchTab(tabName, el) {
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-    
     document.getElementById(`tab-${tabName}`).classList.add('active');
     if (el) el.classList.add('active');
-    
-    render();
+    renderAll();
   }
 
-  async function loadFromSpreadsheet() {
-    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
-      render();
-      return;
-    }
-    const banner = document.getElementById('loadingBanner');
-    if(banner) banner.style.display = 'block';
-
-    try {
-      const res = await fetch(GAS_URL);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        transactions = data.map(t => ({
-          ...t,
-          date: cleanDateStr(t.date),
-          amount: Number(t.amount) || 0,
-          synced: true // スプレッドシートから取得したデータはすべて同期済み扱いにする
-        }));
-        localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
-      }
-    } catch (err) {
-      console.log("スプレッドシート読み込みエラー", err);
-    } finally {
-      if(banner) banner.style.display = 'none';
-      render();
-    }
-  }
-
+  // ================= イベントリスナー：フォーム関連 =================
   const txForm = document.getElementById('txForm');
   if (txForm) {
     txForm.addEventListener('submit', (e) => {
@@ -549,7 +479,7 @@
         debit: document.getElementById('debitAcc').value,
         credit: document.getElementById('creditAcc').value,
         amount: Number(document.getElementById('amount').value),
-        synced: false // 新規または更新データは未同期にする
+        synced: false
       };
 
       if (editId) {
@@ -566,7 +496,7 @@
       selectedDateStr = txData.date;
       localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       resetForm();
-      render();
+      renderAll();
       switchTab('calendar', document.querySelectorAll('.nav-item')[1]);
     });
   }
@@ -574,18 +504,15 @@
   function editTx(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
-
     document.getElementById('editId').value = tx.id;
     document.getElementById('date').value = tx.date;
     document.getElementById('desc').value = tx.desc;
     document.getElementById('debitAcc').value = tx.debit;
     document.getElementById('creditAcc').value = tx.credit;
     document.getElementById('amount').value = tx.amount;
-
     document.getElementById('formTitle').textContent = "取引の編集";
     document.getElementById('submitBtn').textContent = "更新する";
     document.getElementById('cancelEditBtn').style.display = "block";
-
     switchTab('input', document.querySelectorAll('.nav-item')[0]);
   }
 
@@ -596,7 +523,6 @@
     document.getElementById('debitAcc').value = 'food_grocery';
     document.getElementById('creditAcc').value = 'cash';
     document.getElementById('amount').value = '';
-
     document.getElementById('formTitle').textContent = "取引の入力";
     document.getElementById('submitBtn').textContent = "登録する";
     document.getElementById('cancelEditBtn').style.display = "none";
@@ -609,33 +535,44 @@
     if (confirm("この取引を削除しますか？")) {
       transactions = transactions.filter(tx => tx.id !== id);
       localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
-      render();
+      renderAll();
     }
   }
 
-  const syncBtn = document.getElementById('syncBtn');
-  if (syncBtn) syncBtn.addEventListener('click', loadFromSpreadsheet);
+  // ================= イベントリスナー：同期・保存 =================
+  async function loadFromSpreadsheet() {
+    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) { renderAll(); return; }
+    const banner = document.getElementById('loadingBanner');
+    if(banner) banner.style.display = 'block';
 
-  // ★ 差分追記バックアップ機能
+    try {
+      const res = await fetch(GAS_URL);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        transactions = data.map(t => ({
+          ...t,
+          date: cleanDateStr(t.date),
+          amount: Number(t.amount) || 0,
+          synced: true
+        }));
+        localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+      }
+    } catch (err) { console.log("同期エラー", err); } 
+    finally { if(banner) banner.style.display = 'none'; renderAll(); }
+  }
+
+  document.getElementById('syncBtn')?.addEventListener('click', loadFromSpreadsheet);
+
+  // 【分割送信機能】
   const backupBtn = document.getElementById('backupBtn');
   if (backupBtn) {
     backupBtn.addEventListener('click', async () => {
-      if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
-        alert("GAS_URLが設定されていません。");
-        return;
-      }
-
+      if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) { alert("GAS_URLを設定してください。"); return; }
       const unsyncedTxs = transactions.filter(t => !t.synced);
-
-      if (unsyncedTxs.length === 0) {
-        alert("追記保存する新しいデータはありません。");
-        return;
-      }
+      if (unsyncedTxs.length === 0) { alert("新しいデータはありません。"); return; }
 
       backupBtn.disabled = true;
-      
-      // ＝＝＝ チャンク（分割）送信処理 ＝＝＝
-      const CHUNK_SIZE = 10; // 1回に送信する件数（10件ずつ）
+      const CHUNK_SIZE = 10;
       let successCount = 0;
       let hasError = false;
 
@@ -651,63 +588,31 @@
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ transactions: chunk })
           });
-
-          // 成功した分だけフラグを「送信済み(true)」に更新し、ローカルに保存
-          chunk.forEach(t => {
-            const target = transactions.find(tx => tx.id === t.id);
-            if(target) target.synced = true;
-          });
+          chunk.forEach(t => { const target = transactions.find(tx => tx.id === t.id); if(target) target.synced = true; });
           localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
           successCount += chunk.length;
-
-          // GAS側の負荷を下げるため、次の送信まで少し待機（0.5秒）
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-        } catch (err) {
-          console.error(err);
-          hasError = true;
-          break; // エラーが起きたらループを中断
-        }
+          await new Promise(resolve => setTimeout(resolve, 500)); // 負荷軽減
+        } catch (err) { hasError = true; break; }
       }
 
-      if (hasError) {
-        alert(`通信エラーが発生しました。\n${successCount}件までは保存されました。しばらく待ってから再度実行してください。`);
-      } else {
-        alert(`${successCount}件の差分データをスプレッドシートへ追記保存しました！`);
-      }
+      if (hasError) alert(`エラー発生。\n${successCount}件まで保存されました。`);
+      else alert(`${successCount}件を追記保存しました！`);
       
       backupBtn.disabled = false;
       backupBtn.textContent = "未送信の差分のみ追記保存";
-      render(); // 画面更新
+      renderAll();
     });
   }
 
-        // 送信に成功したデータの同期フラグを true に変更
-        unsyncedTxs.forEach(t => t.synced = true);
-        localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+  document.getElementById('clearBtn')?.addEventListener('click', () => {
+    if (confirm('【注意】全データを削除しますか？')) {
+      transactions = [];
+      localStorage.removeItem('kakeibo_txs');
+      renderAll();
+    }
+  });
 
-        alert(`${unsyncedTxs.length}件の差分データをスプレッドシートへ追記保存しました！`);
-      } catch (err) {
-        alert("送信に失敗しました。");
-      } finally {
-        backupBtn.disabled = false;
-        backupBtn.textContent = "未送信の差分のみ追記保存";
-      }
-    });
-  }
-
-  const clearBtn = document.getElementById('clearBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      if (confirm('【注意】全データを削除しますか？')) {
-        transactions = [];
-        localStorage.removeItem('kakeibo_txs');
-        render();
-        alert("データをリセットしました。");
-      }
-    });
-  }
-
+  // ================= レンダリング（カレンダー） =================
   function changeMonth(diff) {
     currentCalDate.setMonth(currentCalDate.getMonth() + diff);
     renderCalendar();
@@ -722,351 +627,369 @@
   }
 
   function renderCalendar() {
-    try {
-      const year = currentCalDate.getFullYear();
-      const month = currentCalDate.getMonth();
-      const title = document.getElementById('calendarTitle');
-      if (title) title.textContent = `${year}年 ${month + 1}月`;
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    const title = document.getElementById('calendarTitle');
+    if (title) title.textContent = `${year}年 ${month + 1}月`;
 
-      const grid = document.getElementById('calendarGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
+    const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
 
-      const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
-      weekDays.forEach(d => {
-        const head = document.createElement('div');
-        head.className = 'calendar-day-head';
-        head.textContent = d;
-        grid.appendChild(head);
+    const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+    weekDays.forEach(d => {
+      const head = document.createElement('div');
+      head.className = 'calendar-day-head'; head.textContent = d; grid.appendChild(head);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const prevLastDate = new Date(year, month, 0).getDate();
+
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell other-month'; cell.innerHTML = `<span class="day-num">${prevLastDate - i}</span>`;
+      grid.appendChild(cell);
+    }
+
+    for (let d = 1; d <= lastDate; d++) {
+      const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const cell = document.createElement('div');
+      cell.className = `calendar-cell ${dStr === selectedDateStr ? 'selected' : ''}`;
+      cell.onclick = () => selectDate(dStr);
+
+      let dayExp = 0, dayRev = 0;
+      transactions.filter(t => cleanDateStr(t.date) === dStr).forEach(t => {
+        const deb = ACCOUNTS.find(a => a.id === t.debit);
+        const cred = ACCOUNTS.find(a => a.id === t.credit);
+        if (deb?.type === 'expense') dayExp += t.amount;
+        if (cred?.type === 'revenue') dayRev += t.amount;
       });
 
-      const firstDay = new Date(year, month, 1).getDay();
-      const lastDate = new Date(year, month + 1, 0).getDate();
-      const prevLastDate = new Date(year, month, 0).getDate();
+      let badgeHtml = '';
+      if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${dayRev.toLocaleString()}</div>`;
+      if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${dayExp.toLocaleString()}</div>`;
 
-      for (let i = firstDay - 1; i >= 0; i--) {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-cell other-month';
-        cell.innerHTML = `<span class="day-num">${prevLastDate - i}</span>`;
-        grid.appendChild(cell);
-      }
-
-      for (let d = 1; d <= lastDate; d++) {
-        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const cell = document.createElement('div');
-        cell.className = `calendar-cell ${dStr === selectedDateStr ? 'selected' : ''}`;
-        cell.onclick = () => selectDate(dStr);
-
-        let dayExp = 0, dayRev = 0;
-        transactions.filter(t => cleanDateStr(t.date) === dStr).forEach(t => {
-          const deb = ACCOUNTS.find(a => a.id === t.debit);
-          const cred = ACCOUNTS.find(a => a.id === t.credit);
-          if (deb?.type === 'expense') dayExp += t.amount;
-          if (cred?.type === 'revenue') dayRev += t.amount;
-        });
-
-        let badgeHtml = '';
-        if (dayRev > 0) badgeHtml += `<div class="day-badge badge-rev">+${dayRev.toLocaleString()}</div>`;
-        if (dayExp > 0) badgeHtml += `<div class="day-badge badge-exp">-${dayExp.toLocaleString()}</div>`;
-
-        cell.innerHTML = `
-          <span class="day-num">${d}</span>
-          <div>${badgeHtml}</div>
-        `;
-        grid.appendChild(cell);
-      }
-      renderDailyList();
-    } catch (e) {}
+      cell.innerHTML = `<span class="day-num">${d}</span><div>${badgeHtml}</div>`;
+      grid.appendChild(cell);
+    }
+    renderDailyList();
   }
 
   function renderDailyList() {
-    try {
-      const titleEl = document.getElementById('selectedDateTitle');
-      if (titleEl) titleEl.textContent = `取引一覧 (${selectedDateStr})`;
-      
-      const container = document.getElementById('dailyTxList');
-      if (!container) return;
+    const titleEl = document.getElementById('selectedDateTitle');
+    if (titleEl) titleEl.textContent = `取引一覧 (${selectedDateStr})`;
+    const container = document.getElementById('dailyTxList');
+    if (!container) return;
 
-      const dayTxs = transactions.filter(t => cleanDateStr(t.date) === selectedDateStr);
+    const dayTxs = transactions.filter(t => cleanDateStr(t.date) === selectedDateStr);
+    if (dayTxs.length === 0) {
+      container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-sub); padding:12px 0;">この日の取引はありません</div>`;
+      return;
+    }
 
-      if (dayTxs.length === 0) {
-        container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-sub); padding:12px 0;">この日の取引はありません</div>`;
-        return;
-      }
-
-      let html = '';
-      dayTxs.forEach(tx => {
-        const deb = ACCOUNTS.find(a => a.id === tx.debit)?.name || tx.debit;
-        const cred = ACCOUNTS.find(a => a.id === tx.credit)?.name || tx.credit;
-        html += `
-          <div class="tx-item">
-            <div class="tx-info">
-              <div class="tx-title">${tx.desc}</div>
-              <div class="tx-sub">${deb} ← ${cred}</div>
-            </div>
-            <div class="tx-amount">${tx.amount.toLocaleString()}円</div>
-            <div class="tx-btns">
-              <button class="btn-edit-sm" onclick="editTx(${tx.id})">編集</button>
-              <button class="btn-del-sm" onclick="deleteTx(${tx.id})">削除</button>
-            </div>
+    let html = '';
+    dayTxs.forEach(tx => {
+      const deb = ACCOUNTS.find(a => a.id === tx.debit)?.name || tx.debit;
+      const cred = ACCOUNTS.find(a => a.id === tx.credit)?.name || tx.credit;
+      html += `
+        <div class="tx-item">
+          <div class="tx-info">
+            <div class="tx-title">${tx.desc}</div><div class="tx-sub">${deb} ← ${cred}</div>
           </div>
-        `;
-      });
-      container.innerHTML = html;
-    } catch (e) {}
+          <div class="tx-amount">${tx.amount.toLocaleString()}円</div>
+          <div class="tx-btns">
+            <button class="btn-edit-sm" onclick="editTx(${tx.id})">編集</button>
+            <button class="btn-del-sm" onclick="deleteTx(${tx.id})">削除</button>
+          </div>
+        </div>`;
+    });
+    container.innerHTML = html;
   }
 
-  function render() {
-    try {
-      const balances = {};
-      ACCOUNTS.forEach(a => balances[a.id] = 0);
-      transactions.forEach(tx => {
-        if (balances[tx.debit] !== undefined) balances[tx.debit] += (tx.amount || 0);
-        if (balances[tx.credit] !== undefined) balances[tx.credit] -= (tx.amount || 0);
-      });
+  // ================= セレクトボックス更新 =================
+  function updateMonthSelects() {
+    const months = getUniqueMonths();
+    if (months.length === 0) return;
 
-      let totalRevenue = 0, totalFixed = 0, totalVariable = 0, plHtml = '';
-      plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【収入の部】</th></tr>`;
-      ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
-        const val = -balances[a.id]; totalRevenue += val;
-        if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
-      });
-      plHtml += `<tr style="font-weight:bold; background:#f0fdf4;"><td>収入合計</td><td class="amount">${totalRevenue.toLocaleString()}円</td></tr>`;
+    const latest = months[months.length - 1];
+    if (!currentPieMonth || !months.includes(currentPieMonth)) currentPieMonth = latest;
+    if (!currentPLMonth || !months.includes(currentPLMonth)) currentPLMonth = latest;
+    if (!currentBSMonth || !months.includes(currentBSMonth)) currentBSMonth = latest;
 
-      plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【固定費】</th></tr>`;
-      ACCOUNTS.filter(a => a.category === 'fixed').forEach(a => {
-        const val = balances[a.id]; totalFixed += val;
-        if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
-      });
+    const optionsHtml = months.map(m => `<option value="${m}">${m.replace('-', '年')}月</option>`).join('');
 
-      plHtml += `<tr style="background:#f8fafc;"><th colspan="2">【変動費】</th></tr>`;
-      ACCOUNTS.filter(a => a.category === 'variable').forEach(a => {
-        const val = balances[a.id]; totalVariable += val;
-        if (val !== 0) plHtml += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
-      });
+    ['pieMonthSelect', 'plTableMonthSelect', 'bsTableMonthSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerHTML = optionsHtml;
+        if (id === 'pieMonthSelect') el.value = currentPieMonth;
+        if (id === 'plTableMonthSelect') el.value = currentPLMonth;
+        if (id === 'bsTableMonthSelect') el.value = currentBSMonth;
+      }
+    });
+  }
 
-      const totalExpense = totalFixed + totalVariable;
-      const netSavings = totalRevenue - totalExpense;
+  ['pieMonthSelect', 'plTableMonthSelect', 'bsTableMonthSelect'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', (e) => {
+      if (id === 'pieMonthSelect') { currentPieMonth = e.target.value; renderPieChart(); }
+      if (id === 'plTableMonthSelect') { currentPLMonth = e.target.value; renderPLTable(); }
+      if (id === 'bsTableMonthSelect') { currentBSMonth = e.target.value; renderBSTable(); }
+    });
+  });
 
-      plHtml += `<tr style="font-weight:bold; background:#fef2f2;"><td>支出合計</td><td class="amount">${totalExpense.toLocaleString()}円</td></tr>`;
-      plHtml += `<tr style="font-weight:bold; background:#e6fffa;"><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
-      const plBody = document.getElementById('plBody');
-      if (plBody) plBody.innerHTML = plHtml;
+  // ================= レンダリング（P/L テーブル：月別） =================
+  function renderPLTable() {
+    const plBody = document.getElementById('plBody');
+    if (!plBody) return;
 
-      const centerAmountEl = document.getElementById('pieCenterAmount');
-      if (centerAmountEl) centerAmountEl.textContent = `${totalExpense.toLocaleString()}円`;
+    // 選択された月の取引だけを抽出
+    const mTxs = transactions.filter(t => cleanDateStr(t.date).startsWith(currentPLMonth));
+    const balances = {};
+    ACCOUNTS.forEach(a => balances[a.id] = 0);
+    
+    mTxs.forEach(tx => {
+      if (balances[tx.debit] !== undefined) balances[tx.debit] += tx.amount;
+      if (balances[tx.credit] !== undefined) balances[tx.credit] -= tx.amount;
+    });
 
-      // ── B/S（左右対称 T字型レイアウトの構築） ──
-      let totalAssets = 0, totalLiabilities = 0;
-      
-      let assetRows = '';
-      ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
-        const val = balances[a.id];
-        totalAssets += val;
-        assetRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
-      });
+    let totalRev = 0, totalFixed = 0, totalVar = 0, html = '';
 
-      let liabilityAndEquityRows = '';
-      liabilityAndEquityRows += `<tr class="bs-sub-header"><td colspan="2">【負債の部】</td></tr>`;
-      ACCOUNTS.filter(a => a.type === 'liability').forEach(a => {
-        const val = -balances[a.id];
-        totalLiabilities += val;
-        liabilityAndEquityRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
-      });
+    // 収入
+    html += `<tr><td colspan="2" class="pl-section-title">［収入の部］</td></tr>`;
+    ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
+      const val = -balances[a.id]; totalRev += val;
+      html += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
+    html += `<tr class="bg-green-light pl-total-row"><td>収入合計</td><td class="amount">${totalRev.toLocaleString()}円</td></tr>`;
 
-      const retainedEarnings = balances['equity'] ? -balances['equity'] : 0;
-      liabilityAndEquityRows += `<tr class="bs-sub-header"><td colspan="2">【純資産の部】</td></tr>`;
-      liabilityAndEquityRows += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${retainedEarnings.toLocaleString()}円</td></tr>`;
-      liabilityAndEquityRows += `<tr><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
+    // 固定費
+    html += `<tr><td colspan="2" class="pl-section-title">［固定費］</td></tr>`;
+    ACCOUNTS.filter(a => a.category === 'fixed').forEach(a => {
+      const val = balances[a.id]; totalFixed += val;
+      html += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
 
-      const totalLiabAndEquity = totalLiabilities + retainedEarnings + netSavings;
+    // 変動費
+    html += `<tr><td colspan="2" class="pl-section-title">［変動費］</td></tr>`;
+    ACCOUNTS.filter(a => a.category === 'variable').forEach(a => {
+      const val = balances[a.id]; totalVar += val;
+      html += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
 
-      const bsContainerHtml = `
-        <div class="bs-t-container">
-          <div class="bs-t-box">
-            <table class="bs-t-table">
-              <thead><tr><th>資産</th><th class="amount">金額</th></tr></thead>
-              <tbody>
-                ${assetRows}
-                <tr class="bs-total-row"><td>資産合計</td><td class="amount">${totalAssets.toLocaleString()}円</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="bs-t-box">
-            <table class="bs-t-table">
-              <thead><tr><th>負債・純資産</th><th class="amount">金額</th></tr></thead>
-              <tbody>
-                ${liabilityAndEquityRows}
-                <tr class="bs-total-row"><td>負債・純資産合計</td><td class="amount">${totalLiabAndEquity.toLocaleString()}円</td></tr>
-              </tbody>
-            </table>
-          </div>
+    const totalExp = totalFixed + totalVar;
+    const netSavings = totalRev - totalExp;
+
+    html += `<tr class="bg-red-light pl-total-row"><td>支出合計</td><td class="amount">${totalExp.toLocaleString()}円</td></tr>`;
+    html += `<tr class="bg-cyan-light pl-total-row"><td>今期の収支差額</td><td class="amount">${netSavings.toLocaleString()}円</td></tr>`;
+
+    plBody.innerHTML = html;
+  }
+
+  // ================= レンダリング（B/S テーブル：選択月末までの累計） =================
+  function renderBSTable() {
+    const bsBody = document.getElementById('bsBody');
+    if (!bsBody) return;
+
+    // 選択された月までの全取引を抽出（特定時点の残高スナップショット）
+    const endOfMonthStr = `${currentBSMonth}-31`;
+    const snapshotTxs = transactions.filter(t => cleanDateStr(t.date) <= endOfMonthStr);
+
+    const balances = {};
+    ACCOUNTS.forEach(a => balances[a.id] = 0);
+    snapshotTxs.forEach(tx => {
+      if (balances[tx.debit] !== undefined) balances[tx.debit] += tx.amount;
+      if (balances[tx.credit] !== undefined) balances[tx.credit] -= tx.amount;
+    });
+
+    let totalAst = 0, totalLia = 0, totalRev = 0, totalExp = 0;
+
+    let astRows = '';
+    ACCOUNTS.filter(a => a.type === 'asset').forEach(a => {
+      const val = balances[a.id]; totalAst += val;
+      astRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
+
+    let liaEqRows = `<tr class="bs-sub-header"><td colspan="2">［負債の部］</td></tr>`;
+    ACCOUNTS.filter(a => a.type === 'liability').forEach(a => {
+      const val = -balances[a.id]; totalLia += val;
+      liaEqRows += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
+    });
+
+    ACCOUNTS.filter(a => a.type === 'expense').forEach(a => totalExp += balances[a.id]);
+    ACCOUNTS.filter(a => a.type === 'revenue').forEach(a => totalRev += -balances[a.id]);
+    
+    const baseEquity = balances['equity'] ? -balances['equity'] : 0;
+    const netIncome = totalRev - totalExp;
+
+    liaEqRows += `<tr class="bs-sub-header"><td colspan="2">［純資産の部］</td></tr>`;
+    liaEqRows += `<tr><td>過去の蓄積（繰越金）</td><td class="amount">${baseEquity.toLocaleString()}円</td></tr>`;
+    liaEqRows += `<tr><td>今期の収支差額</td><td class="amount">${netIncome.toLocaleString()}円</td></tr>`;
+
+    const totalLiaEq = totalLia + baseEquity + netIncome;
+
+    bsBody.innerHTML = `
+      <div class="bs-t-container">
+        <div class="bs-t-box">
+          <table class="bs-t-table">
+            <thead><tr><th>資産</th><th class="amount">金額</th></tr></thead>
+            <tbody>
+              ${astRows}
+              <tr class="bs-total-row"><td>資産合計</td><td class="amount">${totalAst.toLocaleString()}円</td></tr>
+            </tbody>
+          </table>
         </div>
-      `;
-
-      const bsBody = document.getElementById('bsBody');
-      if (bsBody) bsBody.innerHTML = bsContainerHtml;
-
-      renderCalendar();
-      renderCharts(balances);
-    } catch(e) {}
+        <div class="bs-t-box">
+          <table class="bs-t-table">
+            <thead><tr><th>負債・純資産</th><th class="amount">金額</th></tr></thead>
+            <tbody>
+              ${liaEqRows}
+              <tr class="bs-total-row"><td>負債・純資産合計</td><td class="amount">${totalLiaEq.toLocaleString()}円</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
   }
 
-  function renderCharts(currentBalances) {
-    try {
-      if (typeof Chart === 'undefined') return;
+  // ================= レンダリング（グラフ全般） =================
+  function renderCharts() {
+    renderTrendCharts();
+    renderPieChart();
+  }
 
-      const sortedTxs = [...transactions].sort((a, b) => cleanDateStr(a.date).localeCompare(cleanDateStr(b.date)));
-      const months = [...new Set(sortedTxs.map(t => cleanDateStr(t.date).substring(0, 7)).filter(d => d))];
+  function renderTrendCharts() {
+    if (typeof Chart === 'undefined') return;
+    const months = getUniqueMonths();
+    if (months.length === 0) return;
 
-      const plTrendRevenue = [];
-      const plTrendExpense = [];
-      const plTrendSavings = [];
-      const bsTrendAssets = [];
-      const bsTrendLiabilities = [];
-      const bsTrendEquity = [];
-      const runningBalances = {};
-      
-      ACCOUNTS.forEach(a => runningBalances[a.id] = 0);
+    const plRev = [], plExp = [], plNet = [], bsAst = [], bsLia = [], bsEq = [];
+    const runBal = {}; ACCOUNTS.forEach(a => runBal[a.id] = 0);
 
-      months.forEach(m => {
-        let mRev = 0, mExp = 0;
-        const mTxs = sortedTxs.filter(t => cleanDateStr(t.date).startsWith(m));
-
-        mTxs.forEach(tx => {
-          if (runningBalances[tx.debit] !== undefined) runningBalances[tx.debit] += (tx.amount || 0);
-          if (runningBalances[tx.credit] !== undefined) runningBalances[tx.credit] -= (tx.amount || 0);
-
-          const debAcc = ACCOUNTS.find(a => a.id === tx.debit);
-          const credAcc = ACCOUNTS.find(a => a.id === tx.credit);
-
-          if (debAcc?.type === 'expense') mExp += (tx.amount || 0);
-          if (credAcc?.type === 'revenue') mRev += (tx.amount || 0);
-        });
-
-        plTrendRevenue.push(mRev);
-        plTrendExpense.push(mExp);
-        plTrendSavings.push(mRev - mExp);
-
-        let ast = 0, lia = 0;
-        ACCOUNTS.filter(a => a.type === 'asset').forEach(a => ast += runningBalances[a.id]);
-        ACCOUNTS.filter(a => a.type === 'liability').forEach(a => lia += -runningBalances[a.id]);
-
-        bsTrendAssets.push(ast);
-        bsTrendLiabilities.push(lia);
-        bsTrendEquity.push(ast - lia);
+    months.forEach(m => {
+      let mRev = 0, mExp = 0;
+      transactions.filter(t => cleanDateStr(t.date).startsWith(m)).forEach(tx => {
+        if (runBal[tx.debit] !== undefined) runBal[tx.debit] += tx.amount;
+        if (runBal[tx.credit] !== undefined) runBal[tx.credit] -= tx.amount;
+        const debT = ACCOUNTS.find(a => a.id === tx.debit)?.type;
+        const credT = ACCOUNTS.find(a => a.id === tx.credit)?.type;
+        if (debT === 'expense') mExp += tx.amount;
+        if (credT === 'revenue') mRev += tx.amount;
       });
+      plRev.push(mRev); plExp.push(mExp); plNet.push(mRev - mExp);
 
-      const plTrendCanvas = document.getElementById('plTrendChart');
-      if (plTrendCanvas) {
-        if (chartPLTrend) chartPLTrend.destroy();
-        chartPLTrend = new Chart(plTrendCanvas, {
-          type: 'line',
-          data: {
-            labels: months,
-            datasets: [
-              { label: '収入', data: plTrendRevenue, borderColor: '#10b981', tension: 0.2 },
-              { label: '支出', data: plTrendExpense, borderColor: '#ef4444', tension: 0.2 },
-              { label: '手残り', data: plTrendSavings, borderColor: '#2563eb', tension: 0.2 }
-            ]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
+      let ast = 0, lia = 0;
+      ACCOUNTS.filter(a => a.type === 'asset').forEach(a => ast += runBal[a.id]);
+      ACCOUNTS.filter(a => a.type === 'liability').forEach(a => lia += -runBal[a.id]);
+      bsAst.push(ast); bsLia.push(lia); bsEq.push(ast - lia);
+    });
 
-      const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && currentBalances[a.id] > 0);
-      const pieLabels = expAccounts.map(a => a.name);
-      const pieData = expAccounts.map(a => currentBalances[a.id]);
-      const totalExpSum = pieData.reduce((sum, v) => sum + v, 0);
+    const plTrendCanvas = document.getElementById('plTrendChart');
+    if (plTrendCanvas) {
+      if (chartPLTrend) chartPLTrend.destroy();
+      chartPLTrend = new Chart(plTrendCanvas, {
+        type: 'line',
+        data: { labels: months, datasets: [
+          { label: '収入', data: plRev, borderColor: '#10b981', tension: 0.2 },
+          { label: '支出', data: plExp, borderColor: '#ef4444', tension: 0.2 },
+          { label: '手残り', data: plNet, borderColor: '#2563eb', tension: 0.2 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
 
-      const categoryColors = [
-        '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
-        '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
-        '#14b8a6', '#a855f7', '#eab308'
-      ];
+    const bsTrendCanvas = document.getElementById('bsTrendChart');
+    if (bsTrendCanvas) {
+      if (chartBSTrend) chartBSTrend.destroy();
+      chartBSTrend = new Chart(bsTrendCanvas, {
+        type: 'line',
+        data: { labels: months, datasets: [
+          { label: '純資産（蓄積）', data: bsEq, borderColor: '#2563eb', tension: 0.2, borderWidth: 3 },
+          { label: '総資産', data: bsAst, borderColor: '#10b981', tension: 0.2 },
+          { label: '負債', data: bsLia, borderColor: '#ef4444', tension: 0.2 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+  }
 
-      const plPieCanvas = document.getElementById('plPieChart');
-      if (plPieCanvas) {
-        if (chartPLPie) chartPLPie.destroy();
-        
-        if (pieData.length > 0) {
-          const pluginsConfig = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+  function renderPieChart() {
+    if (typeof Chart === 'undefined') return;
+    const monthExpBalances = {};
+    ACCOUNTS.filter(a => a.type === 'expense').forEach(a => monthExpBalances[a.id] = 0);
 
-          chartPLPie = new Chart(plPieCanvas, {
-            type: 'doughnut',
-            plugins: pluginsConfig,
-            data: {
-              labels: pieLabels,
-              datasets: [{
-                data: pieData,
-                backgroundColor: categoryColors,
-                borderWidth: 2,
-                borderColor: '#ffffff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '68%',
-              layout: { padding: 45 },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const value = context.raw || 0;
-                      const pct = totalExpSum > 0 ? ((value / totalExpSum) * 100).toFixed(1) : 0;
-                      return `${context.label}: ${value.toLocaleString()}円 (${pct}%)`;
-                    }
-                  }
-                },
-                datalabels: {
-                  anchor: 'end',
-                  align: 'end',
-                  offset: 6,
-                  color: function(context) {
-                    return categoryColors[context.dataIndex % categoryColors.length];
-                  },
-                  font: { weight: 'bold', size: 10 },
-                  textAlign: 'center',
-                  formatter: function(value, context) {
-                    if (totalExpSum === 0) return '';
-                    const pct = Math.round((value / totalExpSum) * 100);
-                    if (pct < 2) return '';
-                    const label = context.chart.data.labels[context.dataIndex];
-                    return `${label}\n${pct}%`;
-                  }
+    transactions.filter(t => cleanDateStr(t.date).startsWith(currentPieMonth)).forEach(tx => {
+      if (monthExpBalances[tx.debit] !== undefined) monthExpBalances[tx.debit] += tx.amount;
+    });
+
+    const expAccounts = ACCOUNTS.filter(a => a.type === 'expense' && monthExpBalances[a.id] > 0);
+    const pieLabels = expAccounts.map(a => a.name);
+    const pieData = expAccounts.map(a => monthExpBalances[a.id]);
+    const totalExpSum = pieData.reduce((sum, v) => sum + v, 0);
+
+    const centerAmountEl = document.getElementById('pieCenterAmount');
+    if (centerAmountEl) centerAmountEl.textContent = `${totalExpSum.toLocaleString()}円`;
+
+    // 画像の色味に合わせたカラーパレット
+    const colors = ['#ef4444', '#f97316', '#84cc16', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899', '#a855f7', '#eab308'];
+
+    const plPieCanvas = document.getElementById('plPieChart');
+    if (plPieCanvas) {
+      if (chartPLPie) chartPLPie.destroy();
+      const pluginsConfig = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
+      chartPLPie = new Chart(plPieCanvas, {
+        type: 'doughnut',
+        plugins: pluginsConfig,
+        data: {
+          labels: pieLabels,
+          datasets: [{ data: pieData, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '65%', layout: { padding: 45 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const val = ctx.raw || 0;
+                  const pct = totalExpSum > 0 ? ((val / totalExpSum) * 100).toFixed(1) : 0;
+                  return `${ctx.label}: ${val.toLocaleString()}円 (${pct}%)`;
                 }
               }
+            },
+            datalabels: {
+              anchor: 'end', align: 'end', offset: 5,
+              color: function(ctx) { return colors[ctx.dataIndex % colors.length]; },
+              font: { weight: 'bold', size: 10 },
+              textAlign: 'center',
+              formatter: function(value, ctx) {
+                if (totalExpSum === 0) return '';
+                const pct = Math.round((value / totalExpSum) * 100);
+                if (pct < 2) return '';
+                return `${ctx.chart.data.labels[ctx.dataIndex]}\n${pct}%`;
+              }
             }
-          });
+          }
         }
-      }
+      });
+    }
+  }
 
-      const bsTrendCanvas = document.getElementById('bsTrendChart');
-      if (bsTrendCanvas) {
-        if (chartBSTrend) chartBSTrend.destroy();
-        chartBSTrend = new Chart(bsTrendCanvas, {
-          type: 'line',
-          data: {
-            labels: months,
-            datasets: [
-              { label: '純資産（蓄積）', data: bsTrendEquity, borderColor: '#2563eb', tension: 0.2, borderWidth: 3 },
-              { label: '総資産', data: bsTrendAssets, borderColor: '#10b981', tension: 0.2 },
-              { label: '負債', data: bsTrendLiabilities, borderColor: '#ef4444', tension: 0.2 }
-            ]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-    } catch(e) {}
+  // ================= 統括レンダリング関数 =================
+  function renderAll() {
+    updateMonthSelects();
+    renderCalendar();
+    renderPLTable();
+    renderBSTable();
+    renderCharts();
   }
 
   window.addEventListener('DOMContentLoaded', () => {
     loadLocalData();
     setupAccountSelects();
     resetForm();
-    render();
+    renderAll();
     loadFromSpreadsheet();
   });
 </script>
