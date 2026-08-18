@@ -383,7 +383,7 @@
 </nav>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwPyn0O67OWWlrQIWRWTLGBJ18dvLJC_y-Fn2MylJHLnNAxbQoGDjoWSX4g5wlJKBtq/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwJSx6QgfSISA5iwqbaSj6GDxSdXLD88M1ud-SKakQLlma-_Yi0VeUv1FGTgyB6TcrG/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
@@ -625,7 +625,6 @@
         return;
       }
 
-      // 未同期の差分データを抽出
       const unsyncedTxs = transactions.filter(t => !t.synced);
 
       if (unsyncedTxs.length === 0) {
@@ -634,15 +633,54 @@
       }
 
       backupBtn.disabled = true;
-      backupBtn.textContent = `差分データ (${unsyncedTxs.length}件) を送信中...`;
+      
+      // ＝＝＝ チャンク（分割）送信処理 ＝＝＝
+      const CHUNK_SIZE = 10; // 1回に送信する件数（10件ずつ）
+      let successCount = 0;
+      let hasError = false;
 
-      try {
-        await fetch(GAS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ transactions: unsyncedTxs })
-        });
+      for (let i = 0; i < unsyncedTxs.length; i += CHUNK_SIZE) {
+        const chunk = unsyncedTxs.slice(i, i + CHUNK_SIZE);
+        const currentEnd = Math.min(i + CHUNK_SIZE, unsyncedTxs.length);
+        backupBtn.textContent = `送信中... (${i + 1} 〜 ${currentEnd} / ${unsyncedTxs.length}件)`;
+
+        try {
+          await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ transactions: chunk })
+          });
+
+          // 成功した分だけフラグを「送信済み(true)」に更新し、ローカルに保存
+          chunk.forEach(t => {
+            const target = transactions.find(tx => tx.id === t.id);
+            if(target) target.synced = true;
+          });
+          localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+          successCount += chunk.length;
+
+          // GAS側の負荷を下げるため、次の送信まで少し待機（0.5秒）
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+        } catch (err) {
+          console.error(err);
+          hasError = true;
+          break; // エラーが起きたらループを中断
+        }
+      }
+
+      if (hasError) {
+        alert(`通信エラーが発生しました。\n${successCount}件までは保存されました。しばらく待ってから再度実行してください。`);
+      } else {
+        alert(`${successCount}件の差分データをスプレッドシートへ追記保存しました！`);
+      }
+      
+      backupBtn.disabled = false;
+      backupBtn.textContent = "未送信の差分のみ追記保存";
+      render(); // 画面更新
+    });
+  }
 
         // 送信に成功したデータの同期フラグを true に変更
         unsyncedTxs.forEach(t => t.synced = true);
