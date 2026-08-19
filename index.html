@@ -334,10 +334,10 @@
 </nav>
 
 <script>
-  // GASのデプロイURLを設定（空の場合はローカル保存のみ）
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwJSx6QgfSISA5iwqbaSj6GDxSdXLD88M1ud-SKakQLlma-_Yi0VeUv1FGTgyB6TcrG/exec";
+  // 👇！！！注意！！！ 新しくデプロイしたURLをここに貼り付けてください
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbx1G9W0lnaHZfnVg4uM7hqJGZlNUp1hiw29ZHMtIoRbB1S4hCZdb140qkqsW8QsQKNd/exec";
 
-  // 科目マスタ
+  // 科目マスタ（保険料を追加済み）
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
@@ -349,12 +349,12 @@
     
     { id: 'salary', name: '給料収入', type: 'revenue', category: 'revenue' },
     { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
-  
+
     { id: 'rent', name: '住居費・家賃', type: 'expense', category: 'fixed' },
     { id: 'utility', name: '光熱水道費', type: 'expense', category: 'fixed' },
     { id: 'telecom', name: '通信費（携帯・ネット）', type: 'expense', category: 'fixed' },
     { id: 'subscription', name: 'サブスク・定額費', type: 'expense', category: 'fixed' },
-    { id: 'insurance', name: '保険料（生命保険、車両保険等）', type: 'expense', category: 'fixed' },
+    { id: 'insurance', name: '保険料（生命保険、車両保険）', type: 'expense', category: 'fixed' },
 
     { id: 'food_grocery', name: '食料品費', type: 'expense', category: 'variable' },
     { id: 'food_out', name: '外食代', type: 'expense', category: 'variable' },
@@ -372,7 +372,6 @@
   let currentCalDate = new Date();
   let selectedDateStr = new Date().toISOString().split('T')[0];
 
-  // ドロップダウンで選択中の月 (YYYY-MM形式)
   let currentPieMonth = "";
   let currentPLMonth = "";
   let currentBSMonth = "";
@@ -468,7 +467,6 @@
     renderAll();
   }
 
-  // ================= イベントリスナー：フォーム関連 =================
   const txForm = document.getElementById('txForm');
   if (txForm) {
     txForm.addEventListener('submit', (e) => {
@@ -540,16 +538,15 @@
     }
   }
 
-  // ================= イベントリスナー：同期・保存 =================
   async function loadFromSpreadsheet() {
-    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) { renderAll(); return; }
+    if (GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) { alert("GAS_URLを設定してください"); return; }
     const banner = document.getElementById('loadingBanner');
     if(banner) banner.style.display = 'block';
 
     try {
       const res = await fetch(GAS_URL);
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         transactions = data.map(t => ({
           ...t,
           date: cleanDateStr(t.date),
@@ -558,13 +555,15 @@
         }));
         localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       }
-    } catch (err) { console.log("同期エラー", err); } 
+    } catch (err) { 
+      console.log("同期エラー", err); 
+      alert("読み込みに失敗しました。GASのURLや権限設定を確認してください。");
+    } 
     finally { if(banner) banner.style.display = 'none'; renderAll(); }
   }
 
   document.getElementById('syncBtn')?.addEventListener('click', loadFromSpreadsheet);
 
-  // 【分割送信機能】
   const backupBtn = document.getElementById('backupBtn');
   if (backupBtn) {
     backupBtn.addEventListener('click', async () => {
@@ -592,7 +591,7 @@
           chunk.forEach(t => { const target = transactions.find(tx => tx.id === t.id); if(target) target.synced = true; });
           localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
           successCount += chunk.length;
-          await new Promise(resolve => setTimeout(resolve, 500)); // 負荷軽減
+          await new Promise(resolve => setTimeout(resolve, 500)); 
         } catch (err) { hasError = true; break; }
       }
 
@@ -606,14 +605,13 @@
   }
 
   document.getElementById('clearBtn')?.addEventListener('click', () => {
-    if (confirm('【注意】全データを削除しますか？')) {
+    if (confirm('【注意】ローカルの全データを削除しますか？\n（スプレッドシートのデータは消えません）')) {
       transactions = [];
       localStorage.removeItem('kakeibo_txs');
       renderAll();
     }
   });
 
-  // ================= レンダリング（カレンダー） =================
   function changeMonth(diff) {
     currentCalDate.setMonth(currentCalDate.getMonth() + diff);
     renderCalendar();
@@ -708,7 +706,6 @@
     container.innerHTML = html;
   }
 
-  // ================= セレクトボックス更新 =================
   function updateMonthSelects() {
     const months = getUniqueMonths();
     if (months.length === 0) return;
@@ -739,12 +736,10 @@
     });
   });
 
-  // ================= レンダリング（P/L テーブル：月別） =================
   function renderPLTable() {
     const plBody = document.getElementById('plBody');
     if (!plBody) return;
 
-    // 選択された月の取引だけを抽出
     const mTxs = transactions.filter(t => cleanDateStr(t.date).startsWith(currentPLMonth));
     const balances = {};
     ACCOUNTS.forEach(a => balances[a.id] = 0);
@@ -756,7 +751,6 @@
 
     let totalRev = 0, totalFixed = 0, totalVar = 0, html = '';
 
-    // 収入
     html += `<tr><td colspan="2" class="pl-section-title">［収入の部］</td></tr>`;
     ACCOUNTS.filter(a => a.category === 'revenue').forEach(a => {
       const val = -balances[a.id]; totalRev += val;
@@ -764,14 +758,12 @@
     });
     html += `<tr class="bg-green-light pl-total-row"><td>収入合計</td><td class="amount">${totalRev.toLocaleString()}円</td></tr>`;
 
-    // 固定費
     html += `<tr><td colspan="2" class="pl-section-title">［固定費］</td></tr>`;
     ACCOUNTS.filter(a => a.category === 'fixed').forEach(a => {
       const val = balances[a.id]; totalFixed += val;
       html += `<tr><td>${a.name}</td><td class="amount">${val.toLocaleString()}円</td></tr>`;
     });
 
-    // 変動費
     html += `<tr><td colspan="2" class="pl-section-title">［変動費］</td></tr>`;
     ACCOUNTS.filter(a => a.category === 'variable').forEach(a => {
       const val = balances[a.id]; totalVar += val;
@@ -787,12 +779,10 @@
     plBody.innerHTML = html;
   }
 
-  // ================= レンダリング（B/S テーブル：選択月末までの累計） =================
   function renderBSTable() {
     const bsBody = document.getElementById('bsBody');
     if (!bsBody) return;
 
-    // 選択された月までの全取引を抽出（特定時点の残高スナップショット）
     const endOfMonthStr = `${currentBSMonth}-31`;
     const snapshotTxs = transactions.filter(t => cleanDateStr(t.date) <= endOfMonthStr);
 
@@ -853,7 +843,6 @@
     `;
   }
 
-  // ================= レンダリング（グラフ全般） =================
   function renderCharts() {
     renderTrendCharts();
     renderPieChart();
@@ -931,7 +920,6 @@
     const centerAmountEl = document.getElementById('pieCenterAmount');
     if (centerAmountEl) centerAmountEl.textContent = `${totalExpSum.toLocaleString()}円`;
 
-    // 画像の色味に合わせたカラーパレット
     const colors = ['#ef4444', '#f97316', '#84cc16', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899', '#a855f7', '#eab308'];
 
     const plPieCanvas = document.getElementById('plPieChart');
@@ -977,7 +965,6 @@
     }
   }
 
-  // ================= 統括レンダリング関数 =================
   function renderAll() {
     updateMonthSelects();
     renderCalendar();
