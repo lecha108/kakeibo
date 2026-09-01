@@ -187,7 +187,7 @@
         💡 <b>簡単えらび方ガイド</b><br>
         ・<b>買い物・支払いのとき：</b> 左に使った費目、右に払った口座やカード<br>
         ・<b>給料・収入のとき：</b> 左に入金先の口座、右に収入の項目<br>
-        ・<b>投資信託の月末調整：</b> 増えたら左に投信・右に運用益、減ったら左に運用損・右に投信
+        ・<b>投資信託の評価増減：</b> 増えたら左に投信・右に運用益、減ったら左に運用損・右に投信
       </div>
       <form id="txForm">
         <input type="hidden" id="editId" value="">
@@ -334,10 +334,10 @@
 </nav>
 
 <script>
-  // 👇！！！注意！！！ 新しくデプロイしたURLをここに貼り付けてください
+  // 👇 新しくデプロイしたGASのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbx1G9W0lnaHZfnVg4uM7hqJGZlNUp1hiw29ZHMtIoRbB1S4hCZdb140qkqsW8QsQKNd/exec";
 
-  // 科目マスタ（保険料を追加済み）
+  // 科目マスタ（保険料、運用益、運用損を追加済み）
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
@@ -348,6 +348,7 @@
     { id: 'equity', name: '過去の蓄積（繰越金）', type: 'equity', category: 'equity' },
     
     { id: 'salary', name: '給料収入', type: 'revenue', category: 'revenue' },
+    { id: 'investment_gain', name: '運用益（評価益）', type: 'revenue', category: 'revenue' },
     { id: 'other_rev', name: 'その他収入', type: 'revenue', category: 'revenue' },
 
     { id: 'rent', name: '住居費・家賃', type: 'expense', category: 'fixed' },
@@ -364,6 +365,7 @@
     { id: 'car', name: '自動車費（ガソリン等）', type: 'expense', category: 'variable' },
     { id: 'education', name: '教養・勉強費', type: 'expense', category: 'variable' },
     { id: 'hobby', name: '娯楽・趣味費', type: 'expense', category: 'variable' },
+    { id: 'investment_loss', name: '運用損（評価損）', type: 'expense', category: 'variable' },
     { id: 'other_exp', name: '雑費・その他支出', type: 'expense', category: 'variable' }
   ];
 
