@@ -197,7 +197,7 @@
         </div>
         <div class="form-group">
           <label>摘要（メモ）</label>
-          <input type="text" id="desc" placeholder="例: 月末評価額調整、スーパーで食材購入" required>
+          <input type="text" id="desc" placeholder="例: 電車代、友人との食事会、食材購入" required>
         </div>
         <div class="form-row form-group">
           <div>
@@ -337,7 +337,7 @@
   // 👇 新しくデプロイしたGASのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbx1G9W0lnaHZfnVg4uM7hqJGZlNUp1hiw29ZHMtIoRbB1S4hCZdb140qkqsW8QsQKNd/exec";
 
-  // 科目マスタ（保険料、運用益、運用損を追加済み）
+  // 科目マスタ（交通費、交際費を追加済み）
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
@@ -359,6 +359,8 @@
 
     { id: 'food_grocery', name: '食料品費', type: 'expense', category: 'variable' },
     { id: 'food_out', name: '外食代', type: 'expense', category: 'variable' },
+    { id: 'transportation', name: '交通費（電車・バス等）', type: 'expense', category: 'variable' },
+    { id: 'social', name: '交際費・付き合い', type: 'expense', category: 'variable' },
     { id: 'med_treatment', name: '治療費・診察代', type: 'expense', category: 'variable' },
     { id: 'daily', name: '日用品費', type: 'expense', category: 'variable' },
     { id: 'beauty', name: '美容費', type: 'expense', category: 'variable' },
