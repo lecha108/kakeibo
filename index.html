@@ -319,7 +319,7 @@
 </nav>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbx1G9W0lnaHZfnVg4uM7hqJGZlNUp1hiw29ZHMtIoRbB1S4hCZdb140qkqsW8QsQKNd/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxpL87DMtoBVdf_dO2C0J5MBV249CgnnjvbT-T-6XbsImwooWUZfJiBcimR0mJBO2xK/exec";
 
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
@@ -363,6 +363,10 @@
   let currentPLMonth = "";
   let currentBSMonth = "";
 
+  function generateUniqueId() {
+    return 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+  }
+
   function cleanDateStr(dStr) {
     if (!dStr) return '';
     let str = String(dStr).trim();
@@ -395,7 +399,7 @@
           parsed.forEach(t => {
             const cleaned = {
               ...t,
-              id: t.id ? String(t.id) : String(Date.now()),
+              id: (t.id && String(t.id).trim() !== '') ? String(t.id).trim() : generateUniqueId(),
               date: cleanDateStr(t.date),
               amount: Number(t.amount) || 0,
               synced: t.synced === true
@@ -475,20 +479,16 @@
       };
 
       if (editId) {
-        // 型の違い（文字列/数値）を吸収して文字列で厳密比較
-        const index = transactions.findIndex(t => String(t.id) === String(editId));
+        const targetId = String(editId).trim();
+        const index = transactions.findIndex(t => String(t.id).trim() === targetId);
         if (index !== -1) {
-          transactions[index] = {
-            ...txData,
-            id: String(editId)
-          };
-          alert("更新しました！");
+          transactions[index] = { ...txData, id: targetId };
         } else {
-          transactions.push({ id: String(editId), ...txData });
-          alert("更新しました！");
+          transactions.push({ id: targetId, ...txData });
         }
+        alert("更新しました！");
       } else {
-        transactions.push({ id: String(Date.now()), ...txData });
+        transactions.push({ id: generateUniqueId(), ...txData });
         alert("登録しました！");
       }
 
@@ -501,7 +501,8 @@
   }
 
   function editTx(id) {
-    const tx = transactions.find(t => String(t.id) === String(id));
+    const targetId = String(id).trim();
+    const tx = transactions.find(t => String(t.id).trim() === targetId);
     if (!tx) return;
     document.getElementById('editId').value = String(tx.id);
     document.getElementById('date').value = tx.date;
@@ -530,11 +531,30 @@
   const cancelEditBtn = document.getElementById('cancelEditBtn');
   if (cancelEditBtn) cancelEditBtn.addEventListener('click', resetForm);
 
-  function deleteTx(id) {
+  async function deleteTx(id) {
     if (confirm("この取引を削除しますか？")) {
-      transactions = transactions.filter(tx => String(tx.id) !== String(id));
+      const targetId = String(id).trim();
+      
+      // 1. ローカル配列から削除
+      transactions = transactions.filter(tx => String(tx.id).trim() !== targetId);
       localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
+      
+      // 2. 画面を即座に再描画（これで画面から即削除されます）
       renderAll();
+
+      // 3. GAS（スプレッドシート）にも削除リクエストを送信
+      if (GAS_URL && !GAS_URL.includes("YOUR_DEPLOYED_SCRIPT_ID")) {
+        try {
+          await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'delete', id: targetId })
+          });
+        } catch (err) {
+          console.error("GAS削除通信エラー:", err);
+        }
+      }
     }
   }
 
@@ -551,7 +571,7 @@
         data.forEach(t => {
           const cleaned = {
             ...t,
-            id: t.id ? String(t.id) : String(Date.now()),
+            id: (t.id && String(t.id).trim() !== '') ? String(t.id).trim() : generateUniqueId(),
             date: cleanDateStr(t.date),
             amount: Number(t.amount) || 0,
             synced: true
@@ -563,7 +583,6 @@
       }
     } catch (err) { 
       console.log("同期エラー", err); 
-      alert("読み込みに失敗しました。GASのURLや権限設定を確認してください。");
     } 
     finally { if(banner) banner.style.display = 'none'; renderAll(); }
   }
@@ -592,9 +611,12 @@
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ transactions: chunk })
+            body: JSON.stringify({ action: 'add', transactions: chunk })
           });
-          chunk.forEach(t => { const target = transactions.find(tx => String(tx.id) === String(t.id)); if(target) target.synced = true; });
+          chunk.forEach(t => { 
+            const target = transactions.find(tx => String(tx.id).trim() === String(t.id).trim()); 
+            if(target) target.synced = true; 
+          });
           localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
           successCount += chunk.length;
           await new Promise(resolve => setTimeout(resolve, 500)); 
