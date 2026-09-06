@@ -723,34 +723,38 @@
     fetchGoogleCalendarEvents();
   }
 
-  // ▼ Google Calendar APIの直接呼び出しから、GAS経由の取得へ変更
-async function fetchGoogleCalendarEvents() {
-  // ★ご自身のGASのWebアプリURL（/exec で終わるURL）を設定してください
-  const gasUrl = 'https://script.google.com/macros/s/AKfycbzI6nxvABhkoSK3wh4-RQuMswjA--chBSTJpubr_zB_DYQEuAPDgZKMJhP9qgbHf6c/exec';
+  
+  async function fetchGoogleCalendarEvents() {
+    const gcalId = localStorage.getItem('kakeibo_gcal_id') || '';
+    const gcalKey = localStorage.getItem('kakeibo_gcal_key') || '';
+    const gcalIdInput = document.getElementById('gcalIdInput');
+    const gcalKeyInput = document.getElementById('gcalKeyInput');
+    if (gcalIdInput) gcalIdInput.value = gcalId;
+    if (gcalKeyInput) gcalKeyInput.value = gcalKey;
 
-  const year = currentCalDate.getFullYear();
-  const month = currentCalDate.getMonth() + 1; // 1〜12月
+    if (!gcalId || !gcalKey) return;
 
-  try {
-    const url = `${gasUrl}?action=getCalendar&year=${year}&month=${month}`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      
-      // GASから返ってきたデータのうち、予定（type === 'event'）のみ抽出し整形
-      gcalEvents = data
-        .filter(item => item.type === 'event')
-        .map(item => ({
-          date: item.date,
-          summary: item.title
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    const timeMin = new Date(year, month, 1, 0, 0, 0).toISOString();
+    const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+    try {
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(gcalId)}/events?key=${gcalKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        gcalEvents = (data.items || []).map(item => ({
+          id: item.id,
+          date: cleanDateStr(item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '')),
+          summary: item.summary || '予定'
         }));
+        renderCalendar();
+        renderDailyList();
+      }
+    } catch(e) { console.log("GCal取得エラー", e); }
+  }
 
-      renderCalendar();
-      renderDailyList();
-    }
-  } catch(e) { console.log("GCal取得エラー", e); }
-}
- 
   function changeMonth(diff) {
     currentCalDate.setMonth(currentCalDate.getMonth() + diff);
     const year = currentCalDate.getFullYear();
