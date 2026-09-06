@@ -49,7 +49,6 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     }
     
-    /* カードヘッダー（月選択ドロップダウン用） */
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -79,7 +78,6 @@
     }
     .month-select:focus { border-color: var(--primary); }
 
-    /* フォーム関連 */
     .form-group { margin-bottom: 12px; }
     label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-bottom: 4px; }
     input, select, button {
@@ -99,7 +97,6 @@
     .btn-green { background: #10b981; }
     .btn-red { background: #ef4444; }
 
-    /* カレンダー */
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .calendar-header h3 { font-size: 1.1rem; }
     .calendar-header button { width: auto; padding: 6px 16px; font-size: 0.85rem; }
@@ -113,7 +110,6 @@
     .badge-exp { color: #ef4444; }
     .badge-rev { color: #10b981; }
 
-    /* 取引リスト */
     .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .tx-item:last-child { border-bottom: none; }
     .tx-info { flex: 1; }
@@ -124,7 +120,6 @@
     .btn-edit-sm { background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
     .btn-del-sm { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; width: auto; }
 
-    /* P/L テーブルスタイル */
     .table-responsive { overflow-x: auto; }
     .pl-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     .pl-table th, .pl-table td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; }
@@ -135,7 +130,6 @@
     .bg-red-light { background: #fef2f2 !important; font-weight: bold; }
     .bg-cyan-light { background: #e6fffa !important; font-weight: bold; }
 
-    /* B/S テーブルスタイル */
     .bs-t-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
     .bs-t-box { flex: 1; min-width: 270px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
     .bs-t-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -144,14 +138,12 @@
     .bs-sub-header { background: #f8fafc; font-weight: bold; color: var(--text-sub); font-size: 0.8rem; }
     .bs-total-row { background: #fef08a; font-weight: bold; color: #1e293b; }
 
-    /* グラフコンテナ */
     .chart-container { position: relative; margin-top: 12px; width: 100%; height: 250px; }
     .pie-chart-container { position: relative; margin: 0 auto; width: 100%; max-width: 400px; height: 320px; }
     .pie-center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
     .pie-center-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; }
     .pie-center-amount { font-size: 1.3rem; font-weight: bold; color: var(--text); margin-top: 2px; }
 
-    /* 下部ナビゲーション */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--card); border-top: 1px solid var(--border);
@@ -177,7 +169,7 @@
 
 <div class="container">
 
-  <!-- ================= タブ①：入力フォーム ================= -->
+  <!-- タブ①：入力フォーム -->
   <div id="tab-input" class="tab-content">
     <div class="card">
       <div class="card-header">
@@ -219,7 +211,7 @@
     </div>
   </div>
 
-  <!-- ================= タブ②：カレンダー ================= -->
+  <!-- タブ②：カレンダー -->
   <div id="tab-calendar" class="tab-content active">
     <div class="card">
       <div class="calendar-header">
@@ -249,10 +241,8 @@
     </div>
   </div>
 
-  <!-- ================= タブ③：損益計算書 (P/L) ================= -->
+  <!-- タブ③：損益計算書 (P/L) -->
   <div id="tab-pl" class="tab-content">
-    
-    <!-- 1. 月間推移グラフ -->
     <div class="card">
       <div class="card-header">
         <h2>月間推移（収入・支出・手残り）</h2>
@@ -262,7 +252,6 @@
       </div>
     </div>
     
-    <!-- 2. 支出の内訳（円グラフ） 月選択付き -->
     <div class="card">
       <div class="card-header">
         <h2>支出の内訳（円グラフ）</h2>
@@ -277,7 +266,6 @@
       </div>
     </div>
 
-    <!-- 3. 損益計算書 (P/L) 月選択付き -->
     <div class="card">
       <div class="card-header">
         <h2>損益計算書 (P/L)</h2>
@@ -292,10 +280,8 @@
     </div>
   </div>
 
-  <!-- ================= タブ④：貸借対照表 (B/S) ================= -->
+  <!-- タブ④：貸借対照表 (B/S) -->
   <div id="tab-bs" class="tab-content">
-    
-    <!-- 1. 月間推移グラフ -->
     <div class="card">
       <div class="card-header">
         <h2>純資産・資産・負債の月間推移</h2>
@@ -305,7 +291,6 @@
       </div>
     </div>
 
-    <!-- 2. 貸借対照表 (B/S) 月選択付き -->
     <div class="card">
       <div class="card-header">
         <h2>貸借対照表 (B/S)</h2>
@@ -334,10 +319,8 @@
 </nav>
 
 <script>
-  // 👇 新しくデプロイしたGASのURLを設定してください
   const GAS_URL = "https://script.google.com/macros/s/AKfycbx1G9W0lnaHZfnVg4uM7hqJGZlNUp1hiw29ZHMtIoRbB1S4hCZdb140qkqsW8QsQKNd/exec";
 
-  // 科目マスタ（交通費、交際費を追加済み）
   const ACCOUNTS = [
     { id: 'cash', name: '現金・口座', type: 'asset', category: 'asset' },
     { id: 'paypay', name: '電子マネー', type: 'asset', category: 'asset' },
@@ -408,12 +391,18 @@
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          transactions = parsed.map(t => ({
-            ...t,
-            date: cleanDateStr(t.date),
-            amount: Number(t.amount) || 0,
-            synced: t.synced === true
-          }));
+          const map = new Map();
+          parsed.forEach(t => {
+            const cleaned = {
+              ...t,
+              id: t.id ? String(t.id) : String(Date.now()),
+              date: cleanDateStr(t.date),
+              amount: Number(t.amount) || 0,
+              synced: t.synced === true
+            };
+            map.set(cleaned.id, cleaned);
+          });
+          transactions = Array.from(map.values());
         }
       }
     } catch (e) { transactions = []; }
@@ -486,13 +475,20 @@
       };
 
       if (editId) {
-        const index = transactions.findIndex(t => t.id === Number(editId));
+        // 型の違い（文字列/数値）を吸収して文字列で厳密比較
+        const index = transactions.findIndex(t => String(t.id) === String(editId));
         if (index !== -1) {
-          transactions[index] = { ...transactions[index], ...txData };
+          transactions[index] = {
+            ...txData,
+            id: String(editId)
+          };
+          alert("更新しました！");
+        } else {
+          transactions.push({ id: String(editId), ...txData });
           alert("更新しました！");
         }
       } else {
-        transactions.push({ id: Date.now(), ...txData });
+        transactions.push({ id: String(Date.now()), ...txData });
         alert("登録しました！");
       }
 
@@ -505,9 +501,9 @@
   }
 
   function editTx(id) {
-    const tx = transactions.find(t => t.id === id);
+    const tx = transactions.find(t => String(t.id) === String(id));
     if (!tx) return;
-    document.getElementById('editId').value = tx.id;
+    document.getElementById('editId').value = String(tx.id);
     document.getElementById('date').value = tx.date;
     document.getElementById('desc').value = tx.desc;
     document.getElementById('debitAcc').value = tx.debit;
@@ -536,7 +532,7 @@
 
   function deleteTx(id) {
     if (confirm("この取引を削除しますか？")) {
-      transactions = transactions.filter(tx => tx.id !== id);
+      transactions = transactions.filter(tx => String(tx.id) !== String(id));
       localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       renderAll();
     }
@@ -551,12 +547,18 @@
       const res = await fetch(GAS_URL);
       const data = await res.json();
       if (Array.isArray(data)) {
-        transactions = data.map(t => ({
-          ...t,
-          date: cleanDateStr(t.date),
-          amount: Number(t.amount) || 0,
-          synced: true
-        }));
+        const map = new Map();
+        data.forEach(t => {
+          const cleaned = {
+            ...t,
+            id: t.id ? String(t.id) : String(Date.now()),
+            date: cleanDateStr(t.date),
+            amount: Number(t.amount) || 0,
+            synced: true
+          };
+          map.set(cleaned.id, cleaned);
+        });
+        transactions = Array.from(map.values());
         localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
       }
     } catch (err) { 
@@ -592,7 +594,7 @@
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ transactions: chunk })
           });
-          chunk.forEach(t => { const target = transactions.find(tx => tx.id === t.id); if(target) target.synced = true; });
+          chunk.forEach(t => { const target = transactions.find(tx => String(tx.id) === String(t.id)); if(target) target.synced = true; });
           localStorage.setItem('kakeibo_txs', JSON.stringify(transactions));
           successCount += chunk.length;
           await new Promise(resolve => setTimeout(resolve, 500)); 
@@ -702,8 +704,8 @@
           </div>
           <div class="tx-amount">${tx.amount.toLocaleString()}円</div>
           <div class="tx-btns">
-            <button class="btn-edit-sm" onclick="editTx(${tx.id})">編集</button>
-            <button class="btn-del-sm" onclick="deleteTx(${tx.id})">削除</button>
+            <button class="btn-edit-sm" onclick="editTx('${tx.id}')">編集</button>
+            <button class="btn-del-sm" onclick="deleteTx('${tx.id}')">削除</button>
           </div>
         </div>`;
     });
